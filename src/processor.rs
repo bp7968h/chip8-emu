@@ -71,4 +71,40 @@ impl Processor {
     pub fn new() -> Self {
         Processor::default()
     }
+
+    pub fn cycle(&mut self) {
+        todo!()
+    }
+
+    pub fn fetch(&mut self) -> u16 {
+        todo!()
+    }
+
+    pub fn execute(&mut self, op_code: u16) {
+        todo!()
+    }
+
+    pub fn tick_timers(&mut self) {
+        todo!()
+    }
+
+    pub fn reset(&mut self) {
+        todo!()
+    }
+
+    fn stk_push(&mut self, val: u16) {
+        if self.sp as usize >= STACK_SIZE {
+            panic!("Stack overflow!");
+        }
+        self.stack[self.sp as usize] = val;
+        self.sp += 1;
+    }
+
+    fn stk_pop(&mut self) -> u16 {
+        if self.sp == 0 {
+            panic!("Stack underflow!");
+        }
+        self.sp -= 1;
+        self.stack[self.sp as usize]
+    }
 }
