@@ -72,12 +72,31 @@ impl Processor {
         Processor::default()
     }
 
+    /// Executes a single cycle of the CHIP-8 emulator
+    ///
+    /// This function fetches the next opcode from memory, decodes it,
+    /// and then executes the corresponding operation, potentially modifying
+    /// the CPU's registers or the system's memory.
     pub fn cycle(&mut self) {
-        todo!()
+        let op_code = self.fetch();
+        self.execute(op_code);
     }
 
-    pub fn fetch(&mut self) -> u16 {
-        todo!()
+    /// Fetches the next opecode from memory
+    ///
+    /// This function reads `two bytes` from memory at the current `Program Counter (pc)`
+    /// combines them into a 16-but opcode, and then increments the Program Counter by 2
+    /// to point to the next instruction.
+    ///
+    /// # Returns
+    ///
+    /// A `u16` representing the fetched opcode.
+    fn fetch(&mut self) -> u16 {
+        let high_byte = self.mem[self.pc as usize] as u16;
+        let low_byte = self.mem[(self.pc + 1) as usize] as u16;
+        self.pc += 2;
+        // combine high and low byte to single u16 value
+        (high_byte << 8) | low_byte
     }
 
     pub fn execute(&mut self, op_code: u16) {
