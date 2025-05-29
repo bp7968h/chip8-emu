@@ -155,11 +155,54 @@ impl Processor {
         self.sp -= 1;
         self.stack[self.sp as usize]
     }
+
+    /// Returns the current value of the Program Counter (PC)
+    #[cfg(test)]
+    pub(crate) fn get_pc(&self) -> u16 {
+        self.pc
+    }
+
+    /// Returns the current value of the Program Counter (PC)
+    #[cfg(test)]
+    pub(crate) fn get_sp(&self) -> u16 {
+        self.sp
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_fetch_opcode() {
+        let mut cpu = Processor::new();
+        let opcode: u16 = 0xA1B2;
+        cpu.mem[cpu.get_pc() as usize] = (opcode >> 8) as u8;
+        cpu.mem[(cpu.get_pc() + 1) as usize] = opcode as u8;
+        let initial_pc = cpu.get_pc();
+
+        let fetched_opcode = cpu.fetch();
+
+        assert_eq!(fetched_opcode, opcode);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_pushing_and_popping_to_stack() {
+        let mut cpu = Processor::new();
+        let val1: u16 = 0x1234;
+        let val2: u16 = 0x5678;
+
+        cpu.stk_push(val1);
+        cpu.stk_push(val2);
+        assert_eq!(cpu.get_sp(), 2);
+
+        assert_eq!(cpu.stk_pop(), val2);
+        assert_eq!(cpu.get_sp(), 1);
+
+        assert_eq!(cpu.stk_pop(), val1);
+        assert_eq!(cpu.get_sp(), 0);
+    }
 
     #[test]
     #[should_panic]
