@@ -88,10 +88,27 @@ impl Processor {
         todo!()
     }
 
+    /// Reset the processor to its initial state.
+    ///
+    /// This function sets all registers, memory (including the fontset),
+    /// screen, and timers to their default power-on values as defined by the `Default` trait implementation.
+    /// It modifies the existing `ProcessingUnit` instance.
     pub fn reset(&mut self) {
-        todo!()
+        *self = Processor::default();
     }
 
+    /// Pushes a 16-bit value onto the CHIP-8's call stack.
+    ///
+    /// This function increments the stack pointer (`sp`) after storing the value.
+    ///
+    /// # Arguments
+    ///
+    /// * `val` - The 16-bit value to be pushed onto the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the stack pointer exceeds `STACK_SIZE` (i.e., stack overflow).
+    // TODO: add error handlling instead of panicking
     fn stk_push(&mut self, val: u16) {
         if self.sp as usize >= STACK_SIZE {
             panic!("Stack overflow!");
@@ -100,11 +117,44 @@ impl Processor {
         self.sp += 1;
     }
 
+    /// Pops a 16-bit value from the top of the CHIP-8's call stack.
+    ///
+    /// This function decrements the stack pointer (`sp`) before retrieving the value.
+    ///
+    /// # Returns
+    ///
+    /// The 16-bit value popped from the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the stack pointer is zero (i.e., stack underflow).
+    // TODO: add error handlling instead of panicking
     fn stk_pop(&mut self) -> u16 {
         if self.sp == 0 {
             panic!("Stack underflow!");
         }
         self.sp -= 1;
         self.stack[self.sp as usize]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn test_stack_overflow() {
+        let mut cpu = Processor::new();
+        for i in 0..STACK_SIZE + 1 {
+            cpu.stk_push(i as u16);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_stack_underflow() {
+        let mut cpu = Processor::new();
+        cpu.stk_pop();
     }
 }
