@@ -103,8 +103,26 @@ impl Processor {
         todo!()
     }
 
+    /// Modifies the Delay Timer and Sound Timer as needed
+    ///
+    /// This function is typically called once per emulation cycle (or frame).
+    /// Both timers, if greater than zero are decremented by one.
+    ///
+    /// If the Sound Timer (`st`) transitions from value grater than zero to one,
+    /// a "beep" sound is emitted by the emulator. Once a timer reaches zero it
+    /// remains at zero until the program explicitly sets it to a new value.
     pub fn tick_timers(&mut self) {
-        todo!()
+        if self.dt > 0 {
+            self.dt -= 1;
+        }
+
+        if self.st > 0 {
+            if self.st == 1 {
+                // BEEP
+                // todo!()
+            }
+            self.st -= 1;
+        }
     }
 
     /// Reset the processor to its initial state.
@@ -172,6 +190,36 @@ impl Processor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_tick_timers_decrement() {
+        let mut cpu = Processor::new();
+        cpu.dt = 5;
+        cpu.st = 10;
+
+        cpu.tick_timers();
+
+        assert_eq!(cpu.dt, 4);
+        assert_eq!(cpu.st, 9);
+    }
+
+    #[test]
+    fn test_tick_timers_stops_at_zero() {
+        let mut cpu = Processor::new();
+        cpu.dt = 1;
+        cpu.st = 1;
+
+        cpu.tick_timers();
+        cpu.tick_timers();
+
+        assert_eq!(cpu.dt, 0);
+        assert_eq!(cpu.st, 0);
+
+        cpu.tick_timers();
+
+        assert_eq!(cpu.dt, 0);
+        assert_eq!(cpu.st, 0);
+    }
 
     #[test]
     fn test_fetch_opcode() {
