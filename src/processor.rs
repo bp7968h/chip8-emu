@@ -99,8 +99,35 @@ impl Processor {
         (high_byte << 8) | low_byte
     }
 
+    /// Executes the provided opcode
+    ///
+    /// This function takes a 16-bit opcode, extracts the four hexadecimal nibbles
+    /// that define the instruction, and then performs the corresponding operation,
+    /// potentially modifying the CPU's registers, memory or other state.
+    ///
+    /// # Arguments
+    ///
+    /// * `op_code` - The 16-bit value to decoded and executed.
     pub fn execute(&mut self, op_code: u16) {
-        todo!()
+        let first_nibble = (op_code & 0xF000) >> 12;
+        let x_register = (op_code & 0x0F00) >> 8;
+        let y_register = (op_code & 0x00F0) >> 4;
+        let last_nibble = op_code & 0x000F;
+
+        match (first_nibble, x_register, y_register, last_nibble) {
+            // 0000 - Nop: Do nothing, progress to next opcode
+            (0, 0, 0, 0) => (),
+            // 00E0 - Clear the display
+            (0, 0, 0xE, 0) => {
+                self.screen = [false; SCREEN_WIDTH * SCREEN_HEIGHT];
+            }
+            // 00EE - Return from subroutine
+            (0, 0, 0xE, 0xE) => {
+                let return_addr = self.stk_pop();
+                self.pc = return_addr
+            }
+            (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
+        }
     }
 
     /// Modifies the Delay Timer and Sound Timer as needed
@@ -190,6 +217,32 @@ impl Processor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_execute_nop() {
+        let mut cpu = Processor::new();
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x0000);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_cls() {
+        let mut cpu = Processor::new();
+        cpu.screen[0] = true;
+        cpu.execute(0x00E0);
+        assert!(!cpu.screen.iter().any(|&pixel| pixel));
+    }
+
+    #[test]
+    fn test_execute_ret() {
+        let mut cpu = Processor::new();
+        cpu.sp = 1;
+        cpu.stack[0] = 0x567;
+        cpu.execute(0x00EE);
+        assert_eq!(cpu.get_pc(), 0x567);
+        assert_eq!(cpu.sp, 0);
+    }
 
     #[test]
     fn test_tick_timers_decrement() {
