@@ -126,6 +126,31 @@ impl Processor {
                 let return_addr = self.stk_pop();
                 self.pc = return_addr
             }
+            // 1NNN - Jump to address `NNN`
+            (1, _, _, _) => {
+                let jump_addr = op_code & 0x0FFF;
+                self.pc = jump_addr;
+            }
+            // 2NNN - Enter/Call subroutine at address `NNN`
+            (2, _, _, _) => {
+                let goto_addr = op_code & 0x0FFF;
+                self.stk_push(self.pc);
+                self.pc = goto_addr;
+            }
+            // 3XNN - Skip next instruction if VX == NN
+            (3, vx, n1, n2) => {
+                let nn = ((n1 << 4) | n2) as u8;
+                if self.vr[vx as usize] == nn {
+                    self.pc += 2;
+                }
+            }
+            // 4XNN - Skip next instruction if VX != NN
+            (4, vx, n1, n2) => {
+                let nn = ((n1 << 4) | n2) as u8;
+                if self.vr[vx as usize] != nn {
+                    self.pc += 2;
+                }
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
