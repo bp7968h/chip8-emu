@@ -151,6 +151,74 @@ impl Processor {
                     self.pc += 2;
                 }
             }
+            // 5XY0 - Skip next if VX == VY
+            (5, vx, vy, 0) => {
+                if self.vr[vx as usize] == self.vr[vy as usize] {
+                    self.pc += 2;
+                }
+            }
+            // 6XNN - Set VX to the value in NN
+            (6, vx, n1, n2) => {
+                let nn = ((n1 << 4) | n2) as u8;
+                self.vr[vx as usize] = nn;
+            }
+            //todo!() 7XNN - Add the given value in NN to VX
+            (7, vx, n1, n2) => {
+                let nn = ((n1 << 4) | n2) as u8;
+                self.vr[vx as usize] = self.vr[vx as usize].wrapping_add(nn);
+            }
+            // 8XY0 - Set VY to the value in VX
+            (8, vx, vy, 0) => {
+                self.vr[vx as usize] = self.vr[vy as usize];
+            }
+            // 8XY1 - Set VY OR'ed value to VX
+            (8, vx, vy, 1) => {
+                self.vr[vx as usize] |= self.vr[vy as usize];
+            }
+            // 8XY2 - Set VY AND'ed value to VX
+            (8, vx, vy, 2) => {
+                self.vr[vx as usize] &= self.vr[vy as usize];
+            }
+            // 8XY3 - Set VY XOR'ed value to VX
+            (8, vx, vy, 3) => {
+                self.vr[vx as usize] ^= self.vr[vy as usize];
+            }
+            // 8XY4 - Add VY value to VX
+            (8, vx, vy, 4) => {
+                let (res_vx, carry) = self.vr[vx as usize].overflowing_add(self.vr[vy as usize]);
+                let res_vf = if carry { 1 } else { 0 };
+
+                self.vr[vx as usize] = res_vx;
+                self.vr[0xF] = res_vf;
+            }
+            // 8XY5 - Subtract VY value to VX
+            (8, vx, vy, 5) => {
+                let (res_vx, borrow) = self.vr[vx as usize].overflowing_sub(self.vr[vy as usize]);
+                let res_vf = if borrow { 0 } else { 1 };
+
+                self.vr[vx as usize] = res_vx;
+                self.vr[0xF] = res_vf;
+            }
+            // 8XY6 - Single right shift on the value on VX
+            (8, vx, _, 6) => {
+                let dropped_bit = self.vr[vx as usize] & 1;
+                self.vr[vx as usize] >>= 1;
+                self.vr[0xF] = dropped_bit;
+            }
+            // 8XY7 - Subtract VX value to VY
+            (8, vx, vy, 7) => {
+                let (res_vx, borrow) = self.vr[vy as usize].overflowing_sub(self.vr[vx as usize]);
+                let res_vf = if borrow { 0 } else { 1 };
+
+                self.vr[vx as usize] = res_vx;
+                self.vr[0xF] = res_vf;
+            }
+            // 8XYE - Single right shift on the value on VX
+            (8, vx, _, 0xE) => {
+                let dropped_bit = self.vr[vx as usize] & 0b10000000;
+                self.vr[vx as usize] <<= 1;
+                self.vr[0xF] = dropped_bit;
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
