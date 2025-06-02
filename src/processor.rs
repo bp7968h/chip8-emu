@@ -1,4 +1,5 @@
 use crate::{RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
+use rand;
 
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
 /// This struct encapsulates the entire state of the emulator at any given time.
@@ -218,6 +219,28 @@ impl Processor {
                 let dropped_bit = self.vr[vx as usize] & 0b10000000;
                 self.vr[vx as usize] <<= 1;
                 self.vr[0xF] = dropped_bit;
+            }
+            // 9XY0 - Skip instruction if VX != VY
+            (9, vx, vy, 0) => {
+                if self.vr[vx as usize] != self.vr[vy as usize] {
+                    self.pc += 2;
+                }
+            }
+            // ANNN - Add the value of NNN into I register
+            (0xA, n1, n2, n3) => {
+                let nnn = (n1 << 8) | (n2 << 4) | n3;
+                self.ir = nnn;
+            }
+            // BNNN - Jump to V0 + NNN instruction position
+            (0xB, n1, n2, n3) => {
+                let nnn = (n1 << 8) | (n2 << 4) | n3;
+                self.pc = (self.vr[0] as u16) + nnn;
+            }
+            // CXNN - Set the value of VX to random number AND'ed with NN
+            (0xC, vx, n1, n2) => {
+                let nn = ((n1 << 4) | n2) as u8;
+                let rand = rand::random::<u8>();
+                self.vr[vx as usize] = rand & nn;
             }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
