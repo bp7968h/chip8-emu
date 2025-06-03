@@ -270,6 +270,20 @@ impl Processor {
                     self.vr[0xF] = 0;
                 }
             }
+            // EX9E - Skip next instruction if VX is pressed
+            (0xE, vx, 9, 0xE) => {
+                let vx_val = self.vr[vx as usize];
+                if self.keys[vx_val as usize] {
+                    self.pc += 2;
+                }
+            }
+            // EXA1 - Skip next instruction if VX is not pressed
+            (0xE, vx, 0xA, 1) => {
+                let vx_val = self.vr[vx as usize];
+                if !self.keys[vx_val as usize] {
+                    self.pc += 2;
+                }
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
