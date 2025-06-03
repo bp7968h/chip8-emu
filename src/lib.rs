@@ -21,3 +21,7 @@ pub(crate) const STACK_SIZE: usize = 16;
 /// Addresses 0x000 to 0x1FF (0-511) are reserved for the CHIP-8 interpreter and font set.
 /// Most programs begin execution at 0x200 (512).
 pub(crate) const START_ADDR: u16 = 0x200;
+
+/// The number of keys on the CHIP-8's hexadecimal keypad.
+/// This includes keys 0-9 and A-F, totaling 16 keys.
+pub const NUM_KEYS: usize = 16;

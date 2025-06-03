@@ -1,4 +1,4 @@
-use crate::{RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
+use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
 use rand;
 
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
@@ -36,6 +36,9 @@ pub struct Processor {
     /// Used to store return addresses when calling subroutines.
     stack: [u16; STACK_SIZE],
 
+    /// The number of keys (0-9 and A-f) on the CHIP-8's hexadecimal keypad.
+    keys: [bool; NUM_KEYS],
+
     /// The Delay Timer.
     /// This 8-bit timer decrements at a rate of 60Hz until it reaches zero.
     /// It is used for timing events in games.
@@ -59,6 +62,7 @@ impl Default for Processor {
             ir: 0,
             sp: 0,
             stack: [0; 16],
+            keys: [false; NUM_KEYS],
             dt: 0,
             st: 0,
         }
@@ -282,6 +286,25 @@ impl Processor {
                 let vx_val = self.vr[vx as usize];
                 if !self.keys[vx_val as usize] {
                     self.pc += 2;
+                }
+            }
+            // FX07 - Stores value from Delay Timer (DT) to VX
+            (0xF, vx, 0, 7) => {
+                self.vr[vx as usize] = self.dt;
+            }
+            // FX0A - Blocking instruction, waits for key press
+            (0xF, vx, 0, 0xA) => {
+                let mut key_pressed = false;
+                for i in 0..self.keys.len() {
+                    if self.keys[i] {
+                        self.vr[vx as usize] = i as u8;
+                        key_pressed = true;
+                        break;
+                    }
+                }
+
+                if !key_pressed {
+                    self.pc -= 2;
                 }
             }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
