@@ -242,6 +242,34 @@ impl Processor {
                 let rand = rand::random::<u8>();
                 self.vr[vx as usize] = rand & nn;
             }
+            // DXYN - Draw sprite
+            (0xD, vx, vy, n) => {
+                let x_coord = self.vr[vx as usize] as u16;
+                let y_coord = self.vr[vy as usize] as u16;
+
+                let mut flipped = false;
+                for row in 0..n {
+                    let addr = self.ir + row;
+                    let pixels = self.mem[addr as usize];
+
+                    for col in 0..8 {
+                        if (pixels & (0b10000000 >> col)) != 0 {
+                            let x = (x_coord + col) as usize % SCREEN_WIDTH;
+                            let y = (y_coord + row) as usize % SCREEN_HEIGHT;
+
+                            let idx = x + SCREEN_WIDTH * y;
+                            flipped |= self.screen[idx];
+                            self.screen[idx] = true;
+                        }
+                    }
+                }
+
+                if flipped {
+                    self.vr[0xF] = 1;
+                } else {
+                    self.vr[0xF] = 0;
+                }
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
