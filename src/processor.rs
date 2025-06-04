@@ -307,6 +307,25 @@ impl Processor {
                     self.pc -= 2;
                 }
             }
+            // FX16 - Stores value from VX to Delay Timer (DT)
+            (0xF, vx, 1, 6) => {
+                self.dt = self.vr[vx as usize];
+            }
+            // FX18 - Stores value from VX to Sound Timer (ST)
+            (0xF, vx, 1, 8) => {
+                self.st = self.vr[vx as usize];
+            }
+            // FX1E - Add value from VX to I register
+            (0xF, vx, 1, 0xE) => {
+                self.ir = self.ir.wrapping_add(self.vr[vx as usize] as u16);
+            }
+            // FX29 - Set I to font address
+            // Here the character are stored in starting address of the ram,
+            // and each takes 5 bytes, so point at the beginning of each character by multiplying by 5
+            (0xF, vx, 2, 9) => {
+                let character_addr = self.vr[vx as usize] as u16;
+                self.ir = character_addr * 5;
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
