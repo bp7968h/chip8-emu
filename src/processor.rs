@@ -326,6 +326,32 @@ impl Processor {
                 let character_addr = self.vr[vx as usize] as u16;
                 self.ir = character_addr * 5;
             }
+            // FX33 - Store Binary Coded Decimal of VX to I register
+            (0xF, vx, 3, 3) => {
+                let vx_val = self.vr[vx as usize] as f32;
+                let hundredth_digit = (vx_val / 100.0).floor() as u8;
+                let tenth_digit = ((vx_val / 10.0) % 10.0).floor() as u8;
+                let oneth_digit = (vx_val % 10.0) as u8;
+
+                let addr = self.ir as usize;
+                self.mem[addr] = hundredth_digit;
+                self.mem[addr + 1] = tenth_digit;
+                self.mem[addr + 2] = oneth_digit;
+            }
+            // FX55 - Store value from V0 to VX inside I register
+            (0xF, vx, 5, 5) => {
+                let ir_val = self.ir as usize;
+                for i in 0..=(vx as usize) {
+                    self.mem[i + ir_val] = self.vr[i];
+                }
+            }
+            // FX65 - Load value from ram (starting from I reg) and store in V0 to VX
+            (0xF, vx, 6, 5) => {
+                let ir_val = self.ir as usize;
+                for i in 0..=(vx as usize) {
+                    self.vr[i] = self.mem[i + ir_val];
+                }
+            }
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
         }
     }
