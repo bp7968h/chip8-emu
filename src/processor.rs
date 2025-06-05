@@ -445,6 +445,45 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_cycle_fetch_and_execute_jp() {
+        let mut cpu = Processor::new();
+        let jump_address: u16 = 0x345;
+        // 1NNN: JP addr
+        let opcode: u16 = 0x1000 | jump_address;
+
+        // Load the jump opcode into memory at the current PC
+        cpu.mem[cpu.pc as usize] = (opcode >> 8) as u8;
+        cpu.mem[(cpu.pc + 1) as usize] = opcode as u8;
+
+        cpu.cycle();
+
+        // After the cycle, the PC should have jumped to the new address
+        assert_eq!(cpu.get_pc(), jump_address);
+    }
+
+    #[test]
+    fn test_cycle_fetch_and_execute_ld_vx_nn_instruction() {
+        let mut cpu: Processor = Processor::new();
+        // V3
+        let register_index: u8 = 0x3;
+        let value: u8 = 0xAB;
+        // 6XNN: LD Vx, byte
+        let opcode: u16 = 0x6000 | ((register_index as u16) << 8) | (value as u16);
+
+        // Load the LD opcode into memory at the current PC
+        cpu.mem[cpu.pc as usize] = (opcode >> 8) as u8;
+        cpu.mem[(cpu.pc + 1) as usize] = opcode as u8;
+        let initial_pc = cpu.pc;
+
+        cpu.cycle();
+
+        // After the cycle, the specified register should hold the value
+        assert_eq!(cpu.vr[register_index as usize], value);
+        // The PC should have advanced by 2 after fetch
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
     fn test_execute_nop() {
         let mut cpu = Processor::new();
         let initial_pc = cpu.get_pc();
