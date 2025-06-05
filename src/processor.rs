@@ -484,6 +484,20 @@ mod tests {
     }
 
     #[test]
+    fn test_fetch_opcode() {
+        let mut cpu = Processor::new();
+        let opcode: u16 = 0xA1B2;
+        cpu.mem[cpu.get_pc() as usize] = (opcode >> 8) as u8;
+        cpu.mem[(cpu.get_pc() + 1) as usize] = opcode as u8;
+        let initial_pc = cpu.get_pc();
+
+        let fetched_opcode = cpu.fetch();
+
+        assert_eq!(fetched_opcode, opcode);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
     fn test_execute_nop() {
         let mut cpu = Processor::new();
         let initial_pc = cpu.get_pc();
@@ -507,6 +521,41 @@ mod tests {
         cpu.execute(0x00EE);
         assert_eq!(cpu.get_pc(), 0x567);
         assert_eq!(cpu.sp, 0);
+    }
+
+    #[test]
+    fn test_execute_jp() {
+        let mut cpu = Processor::new();
+        cpu.execute(0x1ABC);
+        assert_eq!(cpu.get_pc(), 0xABC);
+    }
+
+    #[test]
+    fn test_execute_call() {
+        let mut cpu = Processor::new();
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x2DEF);
+        assert_eq!(cpu.get_pc(), 0xDEF);
+        assert_eq!(cpu.sp, 1);
+        assert_eq!(cpu.stack[0], initial_pc);
+    }
+
+    #[test]
+    fn test_execute_se_vx_nn_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x3] = 0x42;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x3342);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_se_vx_nn_not_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x3] = 0x41;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x3342);
+        assert_eq!(cpu.get_pc(), initial_pc);
     }
 
     #[test]
@@ -537,20 +586,6 @@ mod tests {
 
         assert_eq!(cpu.dt, 0);
         assert_eq!(cpu.st, 0);
-    }
-
-    #[test]
-    fn test_fetch_opcode() {
-        let mut cpu = Processor::new();
-        let opcode: u16 = 0xA1B2;
-        cpu.mem[cpu.get_pc() as usize] = (opcode >> 8) as u8;
-        cpu.mem[(cpu.get_pc() + 1) as usize] = opcode as u8;
-        let initial_pc = cpu.get_pc();
-
-        let fetched_opcode = cpu.fetch();
-
-        assert_eq!(fetched_opcode, opcode);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
     }
 
     #[test]
