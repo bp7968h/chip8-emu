@@ -559,6 +559,24 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_sne_vx_nn_not_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x1] = 0x10;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x4111);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_sne_vx_nn_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x1] = 0x10;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x4110);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
     fn test_tick_timers_decrement() {
         let mut cpu = Processor::new();
         cpu.dt = 5;
