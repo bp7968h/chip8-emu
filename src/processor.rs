@@ -438,6 +438,12 @@ impl Processor {
     pub(crate) fn get_sp(&self) -> u16 {
         self.sp
     }
+
+    /// Returns the current value of the Index Register (IR)
+    #[cfg(test)]
+    pub(crate) fn get_ir(&self) -> u16 {
+        self.ir
+    }
 }
 
 #[cfg(test)]
@@ -654,6 +660,121 @@ mod tests {
         cpu.execute(0x8234);
         assert_eq!(cpu.vr[0x2], 30);
         assert_eq!(cpu.vr[0xF], 0);
+    }
+
+    #[test]
+    fn test_execute_add_vx_vy_with_carry() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 250;
+        cpu.vr[0x3] = 10;
+        cpu.execute(0x8234);
+        assert_eq!(cpu.vr[0x2], 4);
+        assert_eq!(cpu.vr[0xF], 1);
+    }
+
+    #[test]
+    fn test_execute_sub_vx_vy_no_borrow() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x4] = 30;
+        cpu.vr[0x5] = 10;
+        cpu.execute(0x8455);
+        assert_eq!(cpu.vr[0x4], 20);
+        assert_eq!(cpu.vr[0xF], 1);
+    }
+
+    #[test]
+    fn test_execute_sub_vx_vy_with_borrow() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x4] = 10;
+        cpu.vr[0x5] = 30;
+        cpu.execute(0x8455);
+        assert_eq!(cpu.vr[0x4], 236);
+        assert_eq!(cpu.vr[0xF], 0);
+    }
+
+    #[test]
+    fn test_execute_shr_vx() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x6] = 0b10110101;
+        cpu.execute(0x8606);
+        assert_eq!(cpu.vr[0x6], 0b01011010);
+        assert_eq!(cpu.vr[0xF], 1);
+
+        let mut cpu2 = Processor::new();
+        cpu2.vr[0x6] = 0b10110100;
+        cpu2.execute(0x8606);
+        assert_eq!(cpu2.vr[0x6], 0b01011010);
+        assert_eq!(cpu2.vr[0xF], 0);
+    }
+
+    #[test]
+    fn test_execute_subn_vx_vy_no_borrow() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x7] = 10;
+        cpu.vr[0x8] = 30;
+        cpu.execute(0x8787);
+        assert_eq!(cpu.vr[0x7], 20);
+        assert_eq!(cpu.vr[0xF], 1);
+    }
+
+    #[test]
+    fn test_execute_subn_vx_vy_with_borrow() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x7] = 30;
+        cpu.vr[0x8] = 10;
+        cpu.execute(0x8787);
+        assert_eq!(cpu.vr[0x7], 236);
+        assert_eq!(cpu.vr[0xF], 0);
+    }
+
+    #[test]
+    fn test_execute_shl_vx() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x9] = 0b01011010;
+        cpu.execute(0x890E);
+        assert_eq!(cpu.vr[0x9], 0b10110100);
+        assert_eq!(cpu.vr[0xF], 0);
+
+        let mut cpu2 = Processor::new();
+        cpu2.vr[0x9] = 0b11011010;
+        cpu2.execute(0x890E);
+        assert_eq!(cpu2.vr[0x9], 0b10110100);
+        assert_eq!(cpu2.vr[0xF], 128);
+    }
+
+    #[test]
+    fn test_execute_sne_vx_vy_not_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0xA] = 5;
+        cpu.vr[0xB] = 10;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x9AB0);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_sne_vx_vy_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0xA] = 5;
+        cpu.vr[0xB] = 5;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x9AB0);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_ld_i() {
+        let mut cpu = Processor::new();
+        cpu.execute(0xA123);
+        assert_eq!(cpu.get_ir(), 0x123);
+    }
+
+    #[test]
+    fn test_execute_jp_v0() {
+        let mut cpu = Processor::new();
+        cpu.vr[0] = 0x10;
+        cpu.execute(0xB234);
+        assert_eq!(cpu.get_pc(), 0x234 + 0x10);
     }
 
     #[test]
