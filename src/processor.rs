@@ -50,7 +50,7 @@ pub struct Processor {
     st: u8,
 }
 
-/// Provides a default, initialized state for the `ProcessingUnit`.
+/// Provides a default, initialized state for the `Processor`.
 /// All registers, memory, and timers are set to their initial power-on values.
 impl Default for Processor {
     fn default() -> Self {
@@ -70,9 +70,9 @@ impl Default for Processor {
 }
 
 impl Processor {
-    /// Creates a new `ProcessingUnit` instance with its default, initial state.
+    /// Creates a new `Processor` instance with its default, initial state.
     ///
-    /// This is equivalent to calling `ProcessingUnit::default()`.
+    /// This is equivalent to calling `Processor::default()`.
     pub fn new() -> Self {
         Processor::default()
     }
@@ -382,7 +382,7 @@ impl Processor {
     ///
     /// This function sets all registers, memory (including the fontset),
     /// screen, and timers to their default power-on values as defined by the `Default` trait implementation.
-    /// It modifies the existing `ProcessingUnit` instance.
+    /// It modifies the existing `Processor` instance.
     pub fn reset(&mut self) {
         *self = Processor::default();
     }
@@ -574,6 +574,86 @@ mod tests {
         let initial_pc = cpu.get_pc();
         cpu.execute(0x4110);
         assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_se_vx_vy_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 0x5;
+        cpu.vr[0x7] = 0x5;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x5270);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_se_vx_vy_not_equal() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 0x5;
+        cpu.vr[0x7] = 0x6;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0x5270);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_ld_vx_nn() {
+        let mut cpu = Processor::new();
+        cpu.execute(0x6588);
+        assert_eq!(cpu.vr[0x5], 0x88);
+    }
+
+    #[test]
+    fn test_execute_add_vx_nn() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x9] = 0x10;
+        cpu.execute(0x7920);
+        assert_eq!(cpu.vr[0x9], 0x30);
+    }
+
+    #[test]
+    fn test_execute_ld_vx_vy() {
+        let mut cpu = Processor::new();
+        cpu.vr[0xA] = 0xAA;
+        cpu.execute(0x8BA0);
+        assert_eq!(cpu.vr[0xB], 0xAA);
+    }
+
+    #[test]
+    fn test_execute_or_vx_vy() {
+        let mut cpu = Processor::new();
+        cpu.vr[0xC] = 0b10101010;
+        cpu.vr[0xD] = 0b11001100;
+        cpu.execute(0x8CD1);
+        assert_eq!(cpu.vr[0xC], 0b11101110);
+    }
+
+    #[test]
+    fn test_execute_and_vx_vy() {
+        let mut cpu = Processor::new();
+        cpu.vr[0xE] = 0b10101010;
+        cpu.vr[0xF] = 0b11001100;
+        cpu.execute(0x8EF2);
+        assert_eq!(cpu.vr[0xE], 0b10001000);
+    }
+
+    #[test]
+    fn test_execute_xor_vx_vy() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x0] = 0b10101010;
+        cpu.vr[0x1] = 0b11001100;
+        cpu.execute(0x8013);
+        assert_eq!(cpu.vr[0x0], 0b01100110);
+    }
+
+    #[test]
+    fn test_execute_add_vx_vy_no_carry() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 10;
+        cpu.vr[0x3] = 20;
+        cpu.execute(0x8234);
+        assert_eq!(cpu.vr[0x2], 30);
+        assert_eq!(cpu.vr[0xF], 0);
     }
 
     #[test]
