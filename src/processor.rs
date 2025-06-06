@@ -1,6 +1,29 @@
 use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
 use rand;
 
+/// Represents all possible character sprite
+const FONTSET_SIZE: usize = 80;
+const FONTSET: [u8; FONTSET_SIZE] = [
+    // Each line represents possible character sprite that is displayed on the screen.
+    // Each sprite uses 5byte to represent itself, where the bits are used to identify if the pixel is on or off.
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+];
+
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
 /// This struct encapsulates the entire state of the emulator at any given time.
 #[derive(Debug)]
@@ -54,9 +77,12 @@ pub struct Processor {
 /// All registers, memory, and timers are set to their initial power-on values.
 impl Default for Processor {
     fn default() -> Self {
+        let mut init_ram = [0; RAM_SIZE];
+        init_ram[0..FONTSET_SIZE].copy_from_slice(&FONTSET);
+
         Processor {
             pc: START_ADDR,
-            mem: [0; 4096],
+            mem: init_ram,
             screen: [false; 64 * 32],
             vr: [0; 16],
             ir: 0,
@@ -787,6 +813,81 @@ mod tests {
 
         assert_eq!(cpu.dt, 4);
         assert_eq!(cpu.st, 9);
+    }
+
+    #[test]
+    fn test_execute_drw() {
+        let mut cpu = Processor::new();
+        cpu.ir = 0;
+        cpu.mem[0] = 0xFF; // Single row full of pixels
+        cpu.vr[0] = 0;
+        cpu.vr[1] = 0;
+        cpu.execute(0xD011); // Draw 1-byte sprite at (0, 0)
+
+        for i in 0..8 {
+            assert!(cpu.screen[i]);
+        }
+        assert_eq!(cpu.vr[0xF], 0); // No collision in this simple case
+
+        // Test collision
+        cpu.execute(0xD011); // Draw again at the same position
+        assert_eq!(cpu.vr[0xF], 1); // Collision should occur
+    }
+
+    #[test]
+    fn test_execute_skp_vx_pressed() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 0x5;
+        cpu.keys[0x5] = true;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0xE29E);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_skp_vx_not_pressed() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x2] = 0x5;
+        cpu.keys[0x5] = false;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0xE29E);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_sknp_vx_not_pressed() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x4] = 0xA;
+        cpu.keys[0xA] = false;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0xE4A1);
+        assert_eq!(cpu.get_pc(), initial_pc + 2);
+    }
+
+    #[test]
+    fn test_execute_sknp_vx_pressed() {
+        let mut cpu = Processor::new();
+        cpu.vr[0x4] = 0xA;
+        cpu.keys[0xA] = true;
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0xE4A1);
+        assert_eq!(cpu.get_pc(), initial_pc);
+    }
+
+    #[test]
+    fn test_execute_ld_vx_dt() {
+        let mut cpu = Processor::new();
+        cpu.dt = 0x3C;
+        cpu.execute(0xF107);
+        assert_eq!(cpu.vr[0x1], 0x3C);
+    }
+
+    #[test]
+    fn test_execute_ld_vx_k_skips_if_no_key() {
+        let mut cpu = Processor::new();
+        let initial_pc = cpu.get_pc();
+        cpu.execute(0xF20A);
+        assert_eq!(cpu.get_pc(), initial_pc - 2);
     }
 
     #[test]
