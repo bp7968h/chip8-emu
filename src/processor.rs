@@ -103,6 +103,32 @@ impl Processor {
         Processor::default()
     }
 
+    /// Loads a CHIP-8 program or data into the emulator's memory.
+    ///
+    /// This function copies the provided byte slice `data` into the emulator's
+    /// RAM, starting from the `START_ADDR` (typically 0x200 for CHIP-8 programs).
+    /// This is where most CHIP-8 programs are expected to reside in memory.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A slice of `u8` bytes representing the program's opcode or data.
+    ///            The size of this slice determines how many bytes are loaded.
+    ///
+    /// # Panics
+    ///
+    /// This function **will panic** if the provided `data` is too large to fit
+    /// into the available memory space starting from `START_ADDR`.
+    /// Specifically, it panics if `(START_ADDR + data.len())` exceeds `RAM_SIZE`.
+    /// TODO: Consider refactoring to return a `Result<()>` to handle memory overflow
+    pub fn load(&mut self, data: &[u8]) {
+        let copy_start = START_ADDR as usize;
+        let copy_end = (START_ADDR as usize) + data.len();
+        if copy_end > self.mem.len() {
+            panic!("File Too Large");
+        }
+        self.mem[copy_start..copy_end].copy_from_slice(data);
+    }
+
     /// Provides read-only reference to the display buffer
     ///
     /// This function returns a slice of booleans representing the current state
@@ -115,6 +141,54 @@ impl Processor {
     /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
     pub fn get_display(&self) -> &[bool] {
         &self.screen
+    }
+
+    /// Handles a key press event.
+    ///
+    /// Sets the state of the specified key to `true` (pressed).
+    ///
+    /// # Arguments
+    ///
+    /// * `idx` - The index of the key that was pressed (0-15 for CHIP-8).
+    ///
+    /// # Panics
+    ///
+    /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
+    /// It is the caller's responsibility to provide a valid key index.
+    /// TODO: Consider refactoring to return a `Result<()>`.
+    pub fn keypress(&mut self, idx: usize) {
+        if idx >= self.keys.len() {
+            panic!(
+                "Invalid Key Index: {} provided, but keys array size is {}",
+                idx,
+                self.keys.len()
+            );
+        }
+        self.keys[idx] = true;
+    }
+
+    /// Handles a key release event.
+    ///
+    /// Sets the state of the specified key to `false` (released).
+    ///
+    /// # Arguments
+    ///
+    /// * `idx` - The index of the key that was released (0-15 for CHIP-8).
+    ///
+    /// # Panics
+    ///
+    /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
+    /// It is the caller's responsibility to provide a valid key index.
+    /// TODO: Consider refactoring to return a `Result<()>`.
+    pub fn keyrelease(&mut self, idx: usize) {
+        if idx >= self.keys.len() {
+            panic!(
+                "Invalid Key Index: {} provided, but keys array size is {}",
+                idx,
+                self.keys.len()
+            );
+        }
+        self.keys[idx] = false;
     }
 
     /// Executes a single cycle of the CHIP-8 emulator
