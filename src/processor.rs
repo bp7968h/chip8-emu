@@ -83,11 +83,11 @@ impl Default for Processor {
         Processor {
             pc: START_ADDR,
             mem: init_ram,
-            screen: [false; 64 * 32],
-            vr: [0; 16],
+            screen: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
+            vr: [0; V_REGS],
             ir: 0,
             sp: 0,
-            stack: [0; 16],
+            stack: [0; STACK_SIZE],
             keys: [false; NUM_KEYS],
             dt: 0,
             st: 0,
@@ -101,6 +101,20 @@ impl Processor {
     /// This is equivalent to calling `Processor::default()`.
     pub fn new() -> Self {
         Processor::default()
+    }
+
+    /// Provides read-only reference to the display buffer
+    ///
+    /// This function returns a slice of booleans representing the current state
+    /// of 64x32 pixel monochrome display. Each `true` vale indicates and `on` and `false`
+    /// means an `off` pixel. The data is laid row by row in a single long buffer.
+    ///
+    /// # Returns
+    ///
+    /// A boolean slice, where the first 64 elements represent the first row,
+    /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
+    pub fn get_display(&self) -> &[bool] {
+        &self.screen
     }
 
     /// Executes a single cycle of the CHIP-8 emulator
@@ -475,6 +489,45 @@ impl Processor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_display_returns_correct_initial_value_and_size() {
+        let cpu = Processor::new();
+        let display = cpu.get_display();
+
+        // The display buffer should have a size equal to SCREEN_WIDTH * SCREEN_HEIGHT
+        assert_eq!(display.len(), SCREEN_WIDTH * SCREEN_HEIGHT);
+        assert_eq!(&[false; SCREEN_WIDTH * SCREEN_HEIGHT], display);
+    }
+
+    #[test]
+    fn test_get_display_reflects_internal_screen_state() {
+        let mut cpu = Processor::new();
+
+        // Manually set a few pixels on the internal screen
+        let index1 = 10 + SCREEN_WIDTH * 5; // (10, 5)
+        let index2 = 63 + SCREEN_WIDTH * 31; // (63, 31) - bottom right
+        let index3 = 0 + SCREEN_WIDTH * 0; // (0, 0) - top left
+
+        cpu.screen[index1] = true;
+        cpu.screen[index2] = true;
+
+        let display = cpu.get_display();
+
+        // Verify that the get_display method returns a slice that matches the internal state
+        assert!(display[index1]);
+        assert!(display[index2]);
+        assert!(!display[index3]);
+
+        // Also, verify that all other pixels are false, as only three were set to true
+        let mut count_true_pixels = 0;
+        for &pixel in display.iter() {
+            if pixel {
+                count_true_pixels += 1;
+            }
+        }
+        assert_eq!(count_true_pixels, 2);
+    }
 
     #[test]
     fn test_cycle_fetch_and_execute_jp() {
