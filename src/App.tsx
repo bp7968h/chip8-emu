@@ -1,9 +1,11 @@
-function App() {
+import AppLayout from "./components/layouts/AppLayout"
+import Chip8Playground from "./components/shared/Chip8Playground"
 
+function App() {
   return (
-    <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
+    <AppLayout>
+      <Chip8Playground />
+    </AppLayout>
   )
 }
 

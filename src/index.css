@@ -3,13 +3,14 @@
 
 @theme {
     --font-cmono: 'JetBrains Mono', monospace;
-    --color-default-background: rgb(23, 23, 23);
-    --color-card-background: rgb(39, 39, 42);
+    --color-default: rgb(23, 23, 23);
+    --color-card: rgb(39, 39, 42);
 }
 
 @layer base {
     :root {
-        background-color: var(--color-default-background);
+        font-family: var(--font-cmono);
+        background-color: var(--color-default);
     }
 
     body {
