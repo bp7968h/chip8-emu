@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+@import "tailwindcss";
+
+@theme {
+    --font-cmono: 'JetBrains Mono', monospace;
+    --color-default-background: rgb(23, 23, 23);
+    --color-card-background: rgb(39, 39, 42);
+}
+
+@layer base {
+    :root {
+        background-color: var(--color-default-background);
+    }
+
+    body {
+        color: white;
+    }
+}
