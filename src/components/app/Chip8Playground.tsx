@@ -14,9 +14,11 @@ const Chip8Playground: React.FC = () => {
     return (
         <PlaygroundLayout>
             <Card className="lg:w-1/4">
-                <GameLibrary />
-                <Separator />
-                <GameUpload />
+                <div className="flex flex-col justify-between">
+                    <GameLibrary />
+                    <Separator />
+                    <GameUpload />
+                </div>
             </Card>
             <div className="lg:flex-1 flex flex-col">
                 <Canvas className="h-[70%]" />
