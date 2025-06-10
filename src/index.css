@@ -5,6 +5,9 @@
     --font-cmono: 'JetBrains Mono', monospace;
     --color-default: rgb(23, 23, 23);
     --color-card: rgb(39, 39, 42);
+    --color-cred: rgb(242, 139, 130);
+    --color-cgreen: rgb(129, 201, 149);
+    --color-cyellow: rgb(250, 144, 62);
 }
 
 @layer base {
