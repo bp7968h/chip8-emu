@@ -9,7 +9,7 @@ interface PlaygroundLayoutProps {
 
 const PlaygroundLayout: React.FC<PlaygroundLayoutProps> = ({ children, style }) => {
     return (
-        <div className={`grid grid-cols-1 md:grid-cols-[320px_1fr_140px] gap-2 ${style || ''}`}>
+        <div className={`flex flex-col py-2 px-2 gap-2  lg:flex-row lg:py-8 lg:px-16 h-full ${style || ''}`}>
             {children}
         </div>
     )

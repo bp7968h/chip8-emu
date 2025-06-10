@@ -1,8 +1,12 @@
 import React from "react";
 
-const Canvas: React.FC = () => {
+interface CanvasProps {
+    className?: string
+}
+
+const Canvas: React.FC<CanvasProps> = ({ className }) => {
     return (
-        <canvas className="bg-red-400 rounded-xl">
+        <canvas className={`bg-card rounded-xl w-full mb-2 ${className || ''}`}>
 
         </canvas>
     )

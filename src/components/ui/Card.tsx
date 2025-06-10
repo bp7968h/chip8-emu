@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 
 interface CardProps {
     children: ReactNode,
-    style?: string,
+    className?: string,
 }
 
-const Card: React.FC<CardProps> = ({ children, style }) => {
+const Card: React.FC<CardProps> = ({ children, className }) => {
     return (
-        <div className={`bg-gray-800 opacity-40 rounded-xl shadow-lg p-4 ${style || ''}`}>
+        <div className={`bg-card rounded-xl shadow-lg p-4 ${className || ''}`}>
             {children}
         </div>
     )

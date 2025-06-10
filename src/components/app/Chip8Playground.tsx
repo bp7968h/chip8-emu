@@ -13,20 +13,20 @@ import Separator from "../ui/Separator";
 const Chip8Playground: React.FC = () => {
     return (
         <PlaygroundLayout>
-            <Card>
+            <Card className="lg:w-1/4">
                 <GameLibrary />
                 <Separator />
                 <GameUpload />
             </Card>
-            <div>
-                <Canvas />
-                <Card>
+            <div className="lg:flex-1 flex flex-col">
+                <Canvas className="h-[70%]" />
+                <Card className="flex-1">
                     <Controls />
                     <Separator />
                     <KeyboardMapping />
                 </Card>
             </div>
-            <Card>
+            <Card className="lg:w-1/4">
                 <GameInfo />
                 <Separator />
                 <CpuStatus />

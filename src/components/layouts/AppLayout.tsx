@@ -11,9 +11,9 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return (
-        <div className="flex flex-col min-h-screen min-w-screen justify-center">
+        <div className="flex flex-col min-h-screen min-w-screen">
             <Header navItems={navItems} />
-            <main className="flex-grow max-w-6xl bg-card mx-auto my-8">
+            <main className="flex-grow h-0">
                 {children}
             </main>
             <Footer />
