@@ -9,7 +9,7 @@ const Header: React.FC = () => {
             <div className="flex items-center space-x-2">
                 <img src={chip8Logo} alt="CHIP-8 Logo" className="h-10 w-10 invert" />
                 <span className="text-3xl font-bold text-purple-400">CHIP-8</span>
-                <span className="text-sm text-gray-400">Emulator</span>
+                <span className="hidden sm:block text-sm text-gray-400">Emulator</span>
             </div>
 
             <nav className="flex items-center space-x-6">
@@ -19,7 +19,7 @@ const Header: React.FC = () => {
                     title="About / Help"
                 >
                     <img src={helpLogo} alt="Help" className="h-7 w-7 mr-1" />
-                    <span className="text-lg">About</span>
+                    <span className="hidden sm:block text-lg">About</span>
                 </a>
 
                 <a
@@ -30,7 +30,7 @@ const Header: React.FC = () => {
                     title="GitHub Repository"
                 >
                     <img src={githubLogo} alt="GitHub Repository" className="h-7 w-7 mr-1" />
-                    <span className="text-lg">GitHub</span>
+                    <span className="hidden sm:block text-lg">GitHub</span>
                 </a>
             </nav>
         </header>
