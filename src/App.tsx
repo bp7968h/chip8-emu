@@ -1,5 +1,5 @@
 import AppLayout from "./components/layouts/AppLayout"
-import Chip8Playground from "./components/shared/Chip8Playground"
+import Chip8Playground from "./components/app/Chip8Playground"
 
 function App() {
   return (

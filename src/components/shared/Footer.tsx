@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
                     href="https://github.com/bp7968h"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-green-400 hover:text-green-300 font-semibold"
+                    className="text-purple-400 hover:text-purple-300 font-semibold"
                 >
                     @bp7968h
                 </a>

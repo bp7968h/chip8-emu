@@ -1,37 +1,37 @@
 import React from "react";
 import chip8Logo from "/chip8.svg";
-import githubLogo from "../../assets/github.svg";
-import helpLogo from "../../assets/help.svg";
+import type { NavItemsType } from "../../constants/navItems";
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    navItems: NavItemsType[]
+}
+
+const Header: React.FC<HeaderProps> = ({ navItems }) => {
     return (
         <header className="bg-gray-900 text-white p-4 flex items-center justify-between border-b-2 border-gray-700">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
                 <img src={chip8Logo} alt="CHIP-8 Logo" className="h-10 w-10 invert" />
-                <span className="text-3xl font-bold text-purple-400">CHIP-8</span>
-                <span className="hidden sm:block text-sm text-gray-400">Emulator</span>
+                <span className="text-3xl font-bold text-purple-400 mr-1.5">CHIP-8</span>
+                <span className="sr-only sm:not-sr-only text-sm text-gray-400">Emulator</span>
             </div>
 
             <nav className="flex items-center space-x-6">
-                <a
-                    href="#"
-                    className="flex items-center text-gray-300 hover:text-purple-400 transition-colors duration-200"
-                    title="About / Help"
-                >
-                    <img src={helpLogo} alt="Help" className="h-7 w-7 mr-1" />
-                    <span className="hidden sm:block text-lg">About</span>
-                </a>
-
-                <a
-                    href="https://github.com/bp7968h/chip8-emu"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-gray-300 hover:text-purple-400 transition-colors duration-200"
-                    title="GitHub Repository"
-                >
-                    <img src={githubLogo} alt="GitHub Repository" className="h-7 w-7 mr-1" />
-                    <span className="hidden sm:block text-lg">GitHub</span>
-                </a>
+                {
+                    navItems.map((item, idx) => {
+                        return (
+                            <a
+                                key={item.text + idx.toString()}
+                                href={item.href}
+                                className="flex items-center text-gray-300 hover:text-purple-400 transition-colors duration-200"
+                                title={item.title}
+                                target={item.external ? "_blank" : undefined}
+                                rel={item.external ? "noopener noreferrer" : undefined}
+                            >
+                                <img src={item.src} alt={item.title} className="h-7 w-7 mr-1" />
+                                <span className="sr-only sm:not-sr-only text-lg">{item.text}</span>
+                            </a>)
+                    })
+                }
             </nav>
         </header>
     );
