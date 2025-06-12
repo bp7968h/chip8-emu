@@ -6,8 +6,8 @@ pub(crate) const RAM_SIZE: usize = 4096;
 
 /// The width and height of the CHIP-8's monochrome display in pixels.
 /// The standard CHIP-8 resolution is 64x32 pixels.
-pub const SCREEN_WIDTH: usize = 64;
-pub const SCREEN_HEIGHT: usize = 32;
+pub(crate) const SCREEN_WIDTH: usize = 64;
+pub(crate) const SCREEN_HEIGHT: usize = 32;
 
 /// The number of general-purpose 8-bit registers ($V_0$ through $V_{F}$).
 /// $V_{F}$ is often used as a flag register for certain operations (e.g., carry, borrow).

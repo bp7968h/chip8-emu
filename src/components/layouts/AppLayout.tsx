@@ -13,7 +13,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return (
         <div className="flex flex-col min-h-screen min-w-screen">
             <Header navItems={navItems} />
-            <main className="flex-grow h-0">
+            <main className="lg:flex-grow lg:h-0">
                 {children}
             </main>
             <Footer />

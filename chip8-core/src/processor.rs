@@ -1,5 +1,6 @@
 use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
-use rand;
+use js_sys;
+use wasm_bindgen::prelude::*;
 
 /// Represents all possible character sprite
 const FONTSET_SIZE: usize = 80;
@@ -27,6 +28,7 @@ const FONTSET: [u8; FONTSET_SIZE] = [
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
 /// This struct encapsulates the entire state of the emulator at any given time.
 #[derive(Debug)]
+#[wasm_bindgen]
 pub struct Processor {
     /// The Program Counter (PC).
     /// This 16-bit register stores the address of the next instruction to be executed.
@@ -95,12 +97,32 @@ impl Default for Processor {
     }
 }
 
+#[wasm_bindgen]
 impl Processor {
     /// Creates a new `Processor` instance with its default, initial state.
     ///
     /// This is equivalent to calling `Processor::default()`.
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Processor::default()
+    }
+
+    /// Provides the width of the screen
+    ///
+    /// As wasm_bindgen does not allow to directly export `const` values so adding a associate
+    /// method to expose the `SCREEN_WIDTH`
+    #[wasm_bindgen(js_name = "SCREEN_WIDTH")]
+    pub fn width() -> usize {
+        SCREEN_WIDTH
+    }
+
+    /// Provides the height of the screen
+    ///
+    /// As wasm_bindgen does not allow to directly export `const` values so adding a associate
+    /// method to expose the `SCREEN_HEIGHT`
+    #[wasm_bindgen(js_name = "SCREEN_HEIGHT")]
+    pub fn height() -> usize {
+        SCREEN_HEIGHT
     }
 
     /// Loads a CHIP-8 program or data into the emulator's memory.
@@ -139,7 +161,12 @@ impl Processor {
     ///
     /// A boolean slice, where the first 64 elements represent the first row,
     /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
-    pub fn get_display(&self) -> &[bool] {
+    pub fn screen(&self) -> *const bool {
+        self.screen.as_slice().as_ptr()
+    }
+
+    #[cfg(test)]
+    fn get_display(&self) -> &[bool] {
         &self.screen
     }
 
@@ -156,7 +183,7 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
-    pub fn keypress(&mut self, idx: usize) {
+    pub fn key_press(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
                 "Invalid Key Index: {} provided, but keys array size is {}",
@@ -180,7 +207,7 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
-    pub fn keyrelease(&mut self, idx: usize) {
+    pub fn key_release(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
                 "Invalid Key Index: {} provided, but keys array size is {}",
@@ -357,7 +384,9 @@ impl Processor {
             // CXNN - Set the value of VX to random number AND'ed with NN
             (0xC, vx, n1, n2) => {
                 let nn = ((n1 << 4) | n2) as u8;
-                let rand = rand::random::<u8>();
+                // let rand = rand::random::<u8>();
+                let js_rand_f64 = js_sys::Math::random();
+                let rand = (js_rand_f64 * 256.0) as u8;
                 self.vr[vx as usize] = rand & nn;
             }
             // DXYN - Draw sprite
