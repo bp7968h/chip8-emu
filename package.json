@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "wasm:build": "wasm-pack build ./chip8-core/ --target web --out-dir ../pkg",
-    "dev": "vite",
+    "dev": "npm run wasm:build && vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -16,7 +16,8 @@
     "react-dom": "^19.1.0",
     "tailwindcss": "^4.1.8",
     "vite-plugin-top-level-await": "^1.5.0",
-    "vite-plugin-wasm": "^3.4.1"
+    "vite-plugin-wasm": "^3.4.1",
+    "chip8_core": "file://./pkg"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

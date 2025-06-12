@@ -9,8 +9,10 @@ import KeyboardMapping from "./KeyboardMapping";
 import GameInfo from "./GameInfo";
 import CpuStatus from "./CpuStatus";
 import Separator from "../ui/Separator";
+import useChip8 from "../../hooks/useChip8";
 
 const Chip8Playground: React.FC = () => {
+    const [chip8, memory] = useChip8();
     return (
         <PlaygroundLayout>
             <Card className="lg:w-1/4">
