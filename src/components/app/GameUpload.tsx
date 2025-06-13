@@ -1,13 +1,52 @@
-import React from "react";
+import React, { useRef } from "react";
 import CardContent from "../ui/CardContent"
 
-const GameUpload: React.FC = () => {
+interface GameUploadProps {
+    loadFn: ((data: Uint8Array) => void) | null
+}
+
+const GameUpload: React.FC<GameUploadProps> = ({ loadFn }) => {
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
+    const handleUpload = () => {
+        if (inputRef.current) {
+            inputRef.current.click();
+        }
+    }
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            const rom = files[0];
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                if (e.target && e.target.result && loadFn) {
+                    const arrayBuffer = e.target.result as ArrayBuffer;
+                    const byteArray = new Uint8Array(arrayBuffer);
+                    loadFn(byteArray);
+                    console.log("File Name:", rom.name);
+                    console.log("File Type:", rom.type);
+                    console.log("File Size:", rom.size, "bytes");
+                }
+            };
+
+            reader.onerror = (error) => {
+                console.error("Error reading file:", error);
+            };
+
+            reader.readAsArrayBuffer(rom);
+        }
+    }
+
     return (
         <CardContent title="Upload Game">
             <div className="border-2 border-dashed border-purple-500 rounded-lg p-8 text-center text-purple-400 flex-shrink-0">
                 <p className="text-lg mb-2">Drop ROM file here</p>
                 <p className="text-sm text-gray-400 mb-4">or</p>
                 <button
+                    onClick={handleUpload}
                     className="
             bg-gradient-to-b from-[#6366f1] to-[#4f46e5]
             hover:from-[#4f46e5] hover:to-[#6366f1]
@@ -15,6 +54,13 @@ const GameUpload: React.FC = () => {
           "
                 >
                     Browse Files
+                    <input
+                        type="file"
+                        accept=".ch8,.chip8"
+                        ref={inputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
                 </button>
                 <p className="text-xs font-mono text-gray-400 mt-4">Supports: .ch8, .chip8</p>
             </div>

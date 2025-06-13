@@ -12,30 +12,37 @@ import Separator from "../ui/Separator";
 import useChip8 from "../../hooks/useChip8";
 
 const Chip8Playground: React.FC = () => {
-    const { chip8, memory, screenAddr, isInitialized } = useChip8();
+    const { chip8, memory, screenAddr, loadFn, playFn, pauseFn, resetFn, isRunning, screenUpdateTrigger
+    } = useChip8();
     return (
         <PlaygroundLayout>
             <Card className="lg:w-1/4">
                 <div className="flex flex-col justify-between">
                     <GameLibrary />
                     <Separator />
-                    <GameUpload />
+                    <GameUpload loadFn={loadFn} />
                 </div>
             </Card>
             <div className="lg:flex-1 flex flex-col">
                 {
-                    memory && screenAddr
-                        ?
-                        <Canvas className="h-[70%]" memory={memory} screen_addr={screenAddr} />
-                        : <div className="flex items-center justify-center h-full">
+                    memory && screenAddr !== null ? (
+                        <Canvas
+                            className="h-[70%]"
+                            memory={memory}
+                            screen_addr={screenAddr}
+                            screenUpdateTrigger={screenUpdateTrigger}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
                             <div className="text-center">
                                 <p>Initializing CHIP-8 processor...</p>
                             </div>
                         </div>
+                    )
                 }
 
                 <Card className="flex-1">
-                    <Controls />
+                    <Controls playFn={playFn} resetFn={resetFn} pauseFn={pauseFn} isRunning={isRunning} />
                     <Separator />
                     <KeyboardMapping />
                 </Card>

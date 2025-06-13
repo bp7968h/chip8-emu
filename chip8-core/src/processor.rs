@@ -25,6 +25,14 @@ const FONTSET: [u8; FONTSET_SIZE] = [
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
+#[wasm_bindgen]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pixel {
+    On = 1,
+    Off = 0,
+}
+
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
 /// This struct encapsulates the entire state of the emulator at any given time.
 #[derive(Debug)]
@@ -42,7 +50,7 @@ pub struct Processor {
     /// The 64x32 pixel monochrome display.
     /// Each `bool` represents a pixel: `true` for on (drawn), `false` for off (erased).
     /// Stored in a 1D array for simplicity, mapped as `index = y * SCREEN_WIDTH + x`.
-    screen: [bool; SCREEN_WIDTH * SCREEN_HEIGHT],
+    screen: [Pixel; SCREEN_WIDTH * SCREEN_HEIGHT],
 
     /// The 16 general-purpose 8-bit registers, named $V_0$ through $V_{F}$.
     /// $V_{F}$ (index 15) is special and often used as a flag register.
@@ -85,7 +93,7 @@ impl Default for Processor {
         Processor {
             pc: START_ADDR,
             mem: init_ram,
-            screen: [false; SCREEN_WIDTH * SCREEN_HEIGHT],
+            screen: [Pixel::Off; SCREEN_WIDTH * SCREEN_HEIGHT],
             vr: [0; V_REGS],
             ir: 0,
             sp: 0,
@@ -161,12 +169,12 @@ impl Processor {
     ///
     /// A boolean slice, where the first 64 elements represent the first row,
     /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
-    pub fn screen(&self) -> *const bool {
+    pub fn screen(&self) -> *const Pixel {
         self.screen.as_slice().as_ptr()
     }
 
     #[cfg(test)]
-    fn get_display(&self) -> &[bool] {
+    fn get_display(&self) -> &[Pixel] {
         &self.screen
     }
 
@@ -265,7 +273,7 @@ impl Processor {
             (0, 0, 0, 0) => (),
             // 00E0 - Clear the display
             (0, 0, 0xE, 0) => {
-                self.screen = [false; SCREEN_WIDTH * SCREEN_HEIGHT];
+                self.screen = [Pixel::Off; SCREEN_WIDTH * SCREEN_HEIGHT];
             }
             // 00EE - Return from subroutine
             (0, 0, 0xE, 0xE) => {
@@ -361,7 +369,7 @@ impl Processor {
             }
             // 8XYE - Single right shift on the value on VX
             (8, vx, _, 0xE) => {
-                let dropped_bit = self.vr[vx as usize] & 0b10000000;
+                let dropped_bit = (self.vr[vx as usize] & 0b10000000) >> 7;
                 self.vr[vx as usize] <<= 1;
                 self.vr[0xF] = dropped_bit;
             }
@@ -405,8 +413,20 @@ impl Processor {
                             let y = (y_coord + row) as usize % SCREEN_HEIGHT;
 
                             let idx = x + SCREEN_WIDTH * y;
-                            flipped |= self.screen[idx];
-                            self.screen[idx] = true;
+                            match self.screen[idx] {
+                                Pixel::Off => {
+                                    self.screen[idx] = Pixel::On;
+                                }
+                                Pixel::On => {
+                                    self.screen[idx] = Pixel::Off;
+                                    flipped = true; // Set collision flag when turning a pixel off
+                                }
+                            };
+                            // flipped |= match self.screen[idx] {
+                            //     Pixel::Off => false,
+                            //     Pixel::On => true,
+                            // };
+                            // self.screen[idx] = Pixel::On;
                         }
                     }
                 }
@@ -600,7 +620,7 @@ mod tests {
 
         // The display buffer should have a size equal to SCREEN_WIDTH * SCREEN_HEIGHT
         assert_eq!(display.len(), SCREEN_WIDTH * SCREEN_HEIGHT);
-        assert_eq!(&[false; SCREEN_WIDTH * SCREEN_HEIGHT], display);
+        assert_eq!(&[Pixel::Off; SCREEN_WIDTH * SCREEN_HEIGHT], display);
     }
 
     #[test]
@@ -612,20 +632,20 @@ mod tests {
         let index2 = 63 + SCREEN_WIDTH * 31; // (63, 31) - bottom right
         let index3 = 0 + SCREEN_WIDTH * 0; // (0, 0) - top left
 
-        cpu.screen[index1] = true;
-        cpu.screen[index2] = true;
+        cpu.screen[index1] = Pixel::On;
+        cpu.screen[index2] = Pixel::On;
 
         let display = cpu.get_display();
 
         // Verify that the get_display method returns a slice that matches the internal state
-        assert!(display[index1]);
-        assert!(display[index2]);
-        assert!(!display[index3]);
+        assert_eq!(display[index1], Pixel::On);
+        assert_eq!(display[index2], Pixel::On);
+        assert_eq!(display[index3], Pixel::Off);
 
         // Also, verify that all other pixels are false, as only three were set to true
         let mut count_true_pixels = 0;
         for &pixel in display.iter() {
-            if pixel {
+            if pixel == Pixel::On {
                 count_true_pixels += 1;
             }
         }
@@ -696,9 +716,9 @@ mod tests {
     #[test]
     fn test_execute_cls() {
         let mut cpu = Processor::new();
-        cpu.screen[0] = true;
+        cpu.screen[0] = Pixel::On;
         cpu.execute(0x00E0);
-        assert!(!cpu.screen.iter().any(|&pixel| pixel));
+        assert!(!cpu.screen.iter().any(|&pixel| pixel == Pixel::On));
     }
 
     #[test]
@@ -981,7 +1001,7 @@ mod tests {
         cpu.execute(0xD011); // Draw 1-byte sprite at (0, 0)
 
         for i in 0..8 {
-            assert!(cpu.screen[i]);
+            assert_eq!(cpu.screen[i], Pixel::On);
         }
         assert_eq!(cpu.vr[0xF], 0); // No collision in this simple case
 
