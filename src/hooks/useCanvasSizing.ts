@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useState, type Ref } from "react";
 
 const DEFAULT_GRID_WIDTH = 64;
 const DEFAULT_GRID_HEIGHT = 32;
 
 const useCanvasSizing = (
-    canvasRef: RefObject<HTMLCanvasElement>,
+    canvasRef: Ref<HTMLCanvasElement>,
     gridWidth: number = DEFAULT_GRID_WIDTH,
     gridHeight: number = DEFAULT_GRID_HEIGHT,
 ) => {
     const [pixelSize, setPixelSize] = useState(0);
 
     const calculateCanvasDimensions = useCallback(() => {
-        const canvas = canvasRef.current;
+        const canvas = typeof canvasRef === 'function' ? null : canvasRef?.current;
         if (!canvas) {
             return;
         }
@@ -28,7 +28,7 @@ const useCanvasSizing = (
     }, [canvasRef, gridHeight, gridWidth]);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
+        const canvas = typeof canvasRef === 'function' ? null : canvasRef?.current;
         if (!canvas) {
             return;
         }
@@ -56,7 +56,7 @@ const useCanvasSizing = (
     }, [canvasRef, calculateCanvasDimensions]);
 
 
-    return [pixelSize, calculateCanvasDimensions];
+    return { pixelSize, calculateCanvasDimensions };
 };
 
 export default useCanvasSizing;

@@ -12,7 +12,7 @@ import Separator from "../ui/Separator";
 import useChip8 from "../../hooks/useChip8";
 
 const Chip8Playground: React.FC = () => {
-    const [chip8, memory] = useChip8();
+    const { chip8, memory, screenAddr, isInitialized } = useChip8();
     return (
         <PlaygroundLayout>
             <Card className="lg:w-1/4">
@@ -23,7 +23,17 @@ const Chip8Playground: React.FC = () => {
                 </div>
             </Card>
             <div className="lg:flex-1 flex flex-col">
-                <Canvas className="h-[70%]" />
+                {
+                    memory && screenAddr
+                        ?
+                        <Canvas className="h-[70%]" memory={memory} screen_addr={screenAddr} />
+                        : <div className="flex items-center justify-center h-full">
+                            <div className="text-center">
+                                <p>Initializing CHIP-8 processor...</p>
+                            </div>
+                        </div>
+                }
+
                 <Card className="flex-1">
                     <Controls />
                     <Separator />
