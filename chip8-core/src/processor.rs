@@ -1,5 +1,7 @@
 use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
+#[cfg(target_arch = "wasm32")]
 use js_sys;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 /// Represents all possible character sprite
@@ -25,7 +27,7 @@ const FONTSET: [u8; FONTSET_SIZE] = [
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
-#[wasm_bindgen]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pixel {
@@ -36,7 +38,7 @@ pub enum Pixel {
 /// Represents the main components of the CHIP-8 virtual machine (CPU, memory, display, registers, timers).
 /// This struct encapsulates the entire state of the emulator at any given time.
 #[derive(Debug)]
-#[wasm_bindgen]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub struct Processor {
     /// The Program Counter (PC).
     /// This 16-bit register stores the address of the next instruction to be executed.
@@ -111,12 +113,12 @@ impl Processor {
     }
 }
 
-#[wasm_bindgen]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl Processor {
     /// Creates a new `Processor` instance with its default, initial state.
     ///
     /// This is equivalent to calling `Processor::default()`.
-    #[wasm_bindgen(constructor)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(constructor))]
     pub fn new() -> Self {
         Processor::default()
     }
@@ -125,7 +127,7 @@ impl Processor {
     ///
     /// As wasm_bindgen does not allow to directly export `const` values so adding a associate
     /// method to expose the `SCREEN_WIDTH`
-    #[wasm_bindgen(js_name = "SCREEN_WIDTH")]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(js_name = "SCREEN_WIDTH"))]
     pub fn width() -> usize {
         SCREEN_WIDTH
     }
@@ -134,7 +136,7 @@ impl Processor {
     ///
     /// As wasm_bindgen does not allow to directly export `const` values so adding a associate
     /// method to expose the `SCREEN_HEIGHT`
-    #[wasm_bindgen(js_name = "SCREEN_HEIGHT")]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(js_name = "SCREEN_HEIGHT"))]
     pub fn height() -> usize {
         SCREEN_HEIGHT
     }
@@ -156,7 +158,6 @@ impl Processor {
     /// into the available memory space starting from `START_ADDR`.
     /// Specifically, it panics if `(START_ADDR + data.len())` exceeds `RAM_SIZE`.
     /// TODO: Consider refactoring to return a `Result<()>` to handle memory overflow
-    #[wasm_bindgen]
     pub fn load(&mut self, data: &[u8]) {
         let copy_start = START_ADDR as usize;
         let copy_end = (START_ADDR as usize) + data.len();
@@ -176,7 +177,6 @@ impl Processor {
     ///
     /// A boolean slice, where the first 64 elements represent the first row,
     /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
-    #[wasm_bindgen]
     pub fn screen(&self) -> *const Pixel {
         self.screen.as_slice().as_ptr()
     }
@@ -194,7 +194,6 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
-    #[wasm_bindgen]
     pub fn key_press(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
@@ -219,7 +218,6 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
-    #[wasm_bindgen]
     pub fn key_release(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
@@ -236,7 +234,6 @@ impl Processor {
     /// This function fetches the next opcode from memory, decodes it,
     /// and then executes the corresponding operation, potentially modifying
     /// the CPU's registers or the system's memory.
-    #[wasm_bindgen]
     pub fn cycle(&mut self) {
         let op_code = self.fetch();
         self.execute(op_code);
@@ -398,9 +395,13 @@ impl Processor {
             // CXNN - Set the value of VX to random number AND'ed with NN
             (0xC, vx, n1, n2) => {
                 let nn = ((n1 << 4) | n2) as u8;
+
+                #[cfg(not(target_arch = "wasm32"))]
                 let rand = rand::random::<u8>();
-                // let js_rand_f64 = js_sys::Math::random();
-                // let rand = (js_rand_f64 * 256.0) as u8;
+
+                #[cfg(target_arch = "wasm32")]
+                let rand = (js_sys::Math::random() * 256.0) as u8;
+
                 self.vr[vx as usize] = rand & nn;
             }
             // DXYN - Draw sprite
@@ -537,7 +538,6 @@ impl Processor {
     /// If the Sound Timer (`st`) transitions from value grater than zero to one,
     /// a "beep" sound is emitted by the emulator. Once a timer reaches zero it
     /// remains at zero until the program explicitly sets it to a new value.
-    #[wasm_bindgen]
     pub fn tick_timers(&mut self) {
         if self.dt > 0 {
             self.dt -= 1;
@@ -557,7 +557,6 @@ impl Processor {
     /// This function sets all registers, memory (including the fontset),
     /// screen, and timers to their default power-on values as defined by the `Default` trait implementation.
     /// It modifies the existing `Processor` instance.
-    #[wasm_bindgen]
     pub fn reset(&mut self) {
         *self = Processor::default();
     }
