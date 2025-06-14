@@ -105,6 +105,12 @@ impl Default for Processor {
     }
 }
 
+impl Processor {
+    pub fn get_display(&self) -> &[Pixel] {
+        &self.screen
+    }
+}
+
 #[wasm_bindgen]
 impl Processor {
     /// Creates a new `Processor` instance with its default, initial state.
@@ -150,6 +156,7 @@ impl Processor {
     /// into the available memory space starting from `START_ADDR`.
     /// Specifically, it panics if `(START_ADDR + data.len())` exceeds `RAM_SIZE`.
     /// TODO: Consider refactoring to return a `Result<()>` to handle memory overflow
+    #[wasm_bindgen]
     pub fn load(&mut self, data: &[u8]) {
         let copy_start = START_ADDR as usize;
         let copy_end = (START_ADDR as usize) + data.len();
@@ -169,13 +176,9 @@ impl Processor {
     ///
     /// A boolean slice, where the first 64 elements represent the first row,
     /// the next 64 elements the second row, and so on, for a total of 2048 pixels.
+    #[wasm_bindgen]
     pub fn screen(&self) -> *const Pixel {
         self.screen.as_slice().as_ptr()
-    }
-
-    #[cfg(test)]
-    fn get_display(&self) -> &[Pixel] {
-        &self.screen
     }
 
     /// Handles a key press event.
@@ -191,6 +194,7 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
+    #[wasm_bindgen]
     pub fn key_press(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
@@ -215,6 +219,7 @@ impl Processor {
     /// This function **will panic** if `idx` is out of bounds for the `self.keys` array (0-15).
     /// It is the caller's responsibility to provide a valid key index.
     /// TODO: Consider refactoring to return a `Result<()>`.
+    #[wasm_bindgen]
     pub fn key_release(&mut self, idx: usize) {
         if idx >= self.keys.len() {
             panic!(
@@ -231,6 +236,7 @@ impl Processor {
     /// This function fetches the next opcode from memory, decodes it,
     /// and then executes the corresponding operation, potentially modifying
     /// the CPU's registers or the system's memory.
+    #[wasm_bindgen]
     pub fn cycle(&mut self) {
         let op_code = self.fetch();
         self.execute(op_code);
@@ -392,9 +398,9 @@ impl Processor {
             // CXNN - Set the value of VX to random number AND'ed with NN
             (0xC, vx, n1, n2) => {
                 let nn = ((n1 << 4) | n2) as u8;
-                // let rand = rand::random::<u8>();
-                let js_rand_f64 = js_sys::Math::random();
-                let rand = (js_rand_f64 * 256.0) as u8;
+                let rand = rand::random::<u8>();
+                // let js_rand_f64 = js_sys::Math::random();
+                // let rand = (js_rand_f64 * 256.0) as u8;
                 self.vr[vx as usize] = rand & nn;
             }
             // DXYN - Draw sprite
@@ -470,6 +476,10 @@ impl Processor {
                     self.pc -= 2;
                 }
             }
+            // FX15 - Stores value from VX to Delay Timer (DT)
+            (0xF, vx, 1, 5) => {
+                self.dt = self.vr[vx as usize];
+            }
             // FX16 - Stores value from VX to Delay Timer (DT)
             (0xF, vx, 1, 6) => {
                 self.dt = self.vr[vx as usize];
@@ -527,6 +537,7 @@ impl Processor {
     /// If the Sound Timer (`st`) transitions from value grater than zero to one,
     /// a "beep" sound is emitted by the emulator. Once a timer reaches zero it
     /// remains at zero until the program explicitly sets it to a new value.
+    #[wasm_bindgen]
     pub fn tick_timers(&mut self) {
         if self.dt > 0 {
             self.dt -= 1;
@@ -546,6 +557,7 @@ impl Processor {
     /// This function sets all registers, memory (including the fontset),
     /// screen, and timers to their default power-on values as defined by the `Default` trait implementation.
     /// It modifies the existing `Processor` instance.
+    #[wasm_bindgen]
     pub fn reset(&mut self) {
         *self = Processor::default();
     }
