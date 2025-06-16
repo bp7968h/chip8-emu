@@ -1,27 +1,25 @@
-import React from "react";
+import React, { type RefObject } from "react";
 import CardContent from "../ui/CardContent"
+import type { Processor } from "chip8_core";
 
 interface ControlsProps {
-    playFn: (() => void) | null,
-    pauseFn: (() => void) | null,
-    resetFn: (() => void) | null,
+    processorRef: RefObject<Processor | null>,
+    isGameLoaded: boolean,
     isRunning: boolean,
 }
 
-const Controls: React.FC<ControlsProps> = ({ playFn, pauseFn, resetFn, isRunning }) => {
+const Controls: React.FC<ControlsProps> = ({ processorRef, isGameLoaded, isRunning }) => {
 
     const handlePlayPause = () => {
-        if (isRunning && pauseFn) {
-            pauseFn();
-        } else if (!isRunning && playFn) {
-            playFn();
+        if (isRunning) {
+            // invoke the requestAnimationFrame
+        } else {
+            // invoke the cancelAnimationFrame
         }
     };
 
     const handleReset = () => {
-        if (resetFn) {
-            resetFn();
-        }
+        // invoke cancelAnimation and reset
     };
 
     return (
@@ -32,7 +30,8 @@ const Controls: React.FC<ControlsProps> = ({ playFn, pauseFn, resetFn, isRunning
             text-white font-bold py-2 px-4 rounded-md shadow-md flex items-center hover:cursor-pointer`}
                     aria-label="Play Emulator"
                     onClick={handlePlayPause}
-                    disabled={!playFn && !pauseFn}
+                    // disabled={isGameLoaded}
+                    disabled={!isGameLoaded && !isRunning}
                 >
                     <span className="mr-1 text-base">{isRunning ? "⏸" : "▶"}</span> {isRunning ? "PAUSE" : "PLAY"}
                 </button>
@@ -40,12 +39,12 @@ const Controls: React.FC<ControlsProps> = ({ playFn, pauseFn, resetFn, isRunning
                     className="hover:bg-cred bg-red-700 text-white font-bold py-2 px-4 rounded-md flex items-center hover:cursor-pointer"
                     aria-label="Reset Emulator"
                     onClick={handleReset}
-                    disabled={!resetFn}
+                    disabled={!isRunning}
                 >
                     <span className="mr-1 text-base">↻</span> RESET
                 </button>
             </div>
-        </CardContent>
+        </CardContent >
     )
 }
 

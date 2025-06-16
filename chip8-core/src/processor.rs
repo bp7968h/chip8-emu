@@ -1,6 +1,8 @@
 use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
 #[cfg(target_arch = "wasm32")]
 use js_sys;
+#[cfg(not(target_arch = "wasm32"))]
+use rand;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -115,6 +117,10 @@ impl Processor {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl Processor {
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+    pub fn get_screen_data(&self) -> Vec<u8> {
+        self.screen.iter().map(|&pixel| pixel as u8).collect()
+    }
     /// Creates a new `Processor` instance with its default, initial state.
     ///
     /// This is equivalent to calling `Processor::default()`.
@@ -165,6 +171,10 @@ impl Processor {
             panic!("File Too Large");
         }
         self.mem[copy_start..copy_end].copy_from_slice(data);
+        // #[cfg(not(target_arch = "wasm32"))]
+        // println!("Data Input: {:?}", data);
+        // #[cfg(target_arch = "wasm32")]
+        // web_sys::console::log_1(&format!("Data Input: {:?}", data).into());
     }
 
     /// Provides read-only reference to the display buffer
@@ -236,22 +246,32 @@ impl Processor {
     /// the CPU's registers or the system's memory.
     pub fn cycle(&mut self) {
         let op_code = self.fetch();
+        // #[cfg(not(target_arch = "wasm32"))]
+        // println!("Opcode: 0x{:04X}", op_code);
+        // #[cfg(target_arch = "wasm32")]
+        // web_sys::console::log_1(&format!("Opcode: 0x{:04X}", op_code).into());
         self.execute(op_code);
     }
 
     /// Fetches the next opecode from memory
     ///
     /// This function reads `two bytes` from memory at the current `Program Counter (pc)`
-    /// combines them into a 16-but opcode, and then increments the Program Counter by 2
+    /// combines them into a 16-bit opcode, and then increments the Program Counter by 2
     /// to point to the next instruction.
     ///
     /// # Returns
     ///
     /// A `u16` representing the fetched opcode.
     fn fetch(&mut self) -> u16 {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&format!("RAM: {:?}", self.mem).into());
         let high_byte = self.mem[self.pc as usize] as u16;
         let low_byte = self.mem[(self.pc + 1) as usize] as u16;
         self.pc += 2;
+        #[cfg(not(target_arch = "wasm32"))]
+        println!("High: {}, Low: {}", high_byte, low_byte);
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&format!("High: {}, Low: {}", high_byte, low_byte).into());
         // combine high and low byte to single u16 value
         (high_byte << 8) | low_byte
     }
@@ -481,10 +501,6 @@ impl Processor {
             (0xF, vx, 1, 5) => {
                 self.dt = self.vr[vx as usize];
             }
-            // FX16 - Stores value from VX to Delay Timer (DT)
-            (0xF, vx, 1, 6) => {
-                self.dt = self.vr[vx as usize];
-            }
             // FX18 - Stores value from VX to Sound Timer (ST)
             (0xF, vx, 1, 8) => {
                 self.st = self.vr[vx as usize];
@@ -526,7 +542,11 @@ impl Processor {
                     self.vr[i] = self.mem[i + ir_val];
                 }
             }
-            (_, _, _, _) => unimplemented!("Unimplemented opcode: {}", op_code),
+            (_, _, _, _) => {
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("Unreachable: 0x{:04X}", op_code).into());
+                unimplemented!("Unimplemented opcode: {}", op_code)
+            }
         }
     }
 
