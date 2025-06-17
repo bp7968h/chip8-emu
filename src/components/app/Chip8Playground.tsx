@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PlaygroundLayout from "../layouts/PlaygroundLayout";
 import Card from "../ui/Card";
 import GameLibrary from "./GameLibrary";
@@ -11,18 +11,110 @@ import CpuStatus from "./CpuStatus";
 import Separator from "../ui/Separator";
 import useChip8 from "../../hooks/useChip8";
 
+const CHIP8_CYCLES_PER_FRAME = 10;
+
 const Chip8Playground: React.FC = () => {
-    const { processorRef, memoryRef } = useChip8();
+    const { processorRef, memoryRef, animationFrameIdRef } = useChip8();
     const [isGameLoaded, setIsGameLoaded] = useState<boolean>(false);
     const [isRunning, setIsRunning] = useState<boolean>(false);
+    const [screenUpdateTrigger, setScreenUpdateTrigger] = useState(0);
 
-    if (processorRef.current === null || memoryRef.current === null) {
-        return (
-            <div>
-                <p>Initializing WASM...</p>
-            </div>
-        )
-    }
+    const gameLoop = useCallback(() => {
+        if (processorRef.current === null) {
+            return;
+        }
+
+        for (let i = 0; i < CHIP8_CYCLES_PER_FRAME; i++) {
+            processorRef.current.cycle();
+        }
+        processorRef.current.tick_timers();
+        setScreenUpdateTrigger(prev => prev + 1);
+
+        if (isRunning) {
+            animationFrameIdRef.current = requestAnimationFrame(gameLoop);
+        }
+    }, [isRunning, animationFrameIdRef, processorRef]);
+
+    useEffect(() => {
+        if (isRunning) {
+            animationFrameIdRef.current = requestAnimationFrame(gameLoop);
+        } else {
+            if (animationFrameIdRef.current !== null) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+                animationFrameIdRef.current = null;
+            }
+        }
+
+        return () => {
+            if (animationFrameIdRef.current !== null) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+            }
+        };
+    }, [isRunning, gameLoop, animationFrameIdRef])
+
+    const handleLoadGame = useCallback((data: Uint8Array) => {
+        if (processorRef.current) {
+            processorRef.current.load(data);
+            setIsGameLoaded(true);
+            setIsRunning(false);
+            setScreenUpdateTrigger(prev => prev + 1);
+            console.log("Game loaded.");
+        }
+    }, [processorRef]);
+
+    const handlePlayPause = useCallback(() => {
+        if (!isGameLoaded) return;
+        setIsRunning(prev => !prev);
+    }, [isGameLoaded]);
+
+    const handleReset = useCallback(() => {
+        if (processorRef.current) {
+            setIsRunning(false);
+            processorRef.current.reset();
+            setIsGameLoaded(false);
+            setScreenUpdateTrigger(prev => prev + 1);
+            console.log("Emulator reset.");
+        }
+    }, [processorRef]);
+
+    // Attach keyboard event listeners
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!processorRef.current || !isRunning) return;
+            const keyMap: { [key: string]: number } = {
+                '1': 0x1, '2': 0x2, '3': 0x3, '4': 0xC,
+                'q': 0x4, 'w': 0x5, 'e': 0x6, 'r': 0xD,
+                'a': 0x7, 's': 0x8, 'd': 0x9, 'f': 0xE,
+                'z': 0xA, 'x': 0x0, 'c': 0xB, 'v': 0xF
+            };
+            const chip8Key = keyMap[event.key.toLowerCase()];
+            if (chip8Key !== undefined) {
+                processorRef.current.key_press(chip8Key);
+            }
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            if (!processorRef.current || !isRunning) return;
+            const keyMap: { [key: string]: number } = {
+                '1': 0x1, '2': 0x2, '3': 0x3, '4': 0xC,
+                'q': 0x4, 'w': 0x5, 'e': 0x6, 'r': 0xD,
+                'a': 0x7, 's': 0x8, 'd': 0x9, 'f': 0xE,
+                'z': 0xA, 'x': 0x0, 'c': 0xB, 'v': 0xF
+            };
+            const chip8Key = keyMap[event.key.toLowerCase()];
+            if (chip8Key !== undefined) {
+                processorRef.current.key_release(chip8Key);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keyup', handleKeyUp);
+        };
+    }, [processorRef, isRunning]);
 
     return (
         <PlaygroundLayout>
@@ -30,7 +122,7 @@ const Chip8Playground: React.FC = () => {
                 <div className="flex flex-col justify-between">
                     <GameLibrary />
                     <Separator />
-                    <GameUpload setIsGameLoaded={setIsGameLoaded} processorRef={processorRef} />
+                    <GameUpload onLoadGame={handleLoadGame} />
                 </div>
             </Card>
             <div className="lg:flex-1 flex flex-col">
@@ -38,13 +130,14 @@ const Chip8Playground: React.FC = () => {
                     className="h-[70%]"
                     memoryRef={memoryRef}
                     processorRef={processorRef}
-                    isRunning={isRunning}
+                    screenUpdateTrigger={screenUpdateTrigger}
                 />
                 <Card className="flex-1">
                     <Controls
                         isGameLoaded={isGameLoaded}
                         isRunning={isRunning}
-                        processorRef={processorRef}
+                        onPlayPause={handlePlayPause}
+                        onReset={handleReset}
                     />
                     <Separator />
                     <KeyboardMapping />

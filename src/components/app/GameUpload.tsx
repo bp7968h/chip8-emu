@@ -1,13 +1,11 @@
-import React, { useRef, type RefObject } from "react";
+import React, { useRef } from "react";
 import CardContent from "../ui/CardContent"
-import type { Processor } from "chip8_core";
 
 interface GameUploadProps {
-    processorRef: RefObject<Processor | null>,
-    setIsGameLoaded: React.Dispatch<React.SetStateAction<boolean>>,
+    onLoadGame: (data: Uint8Array) => void,
 }
 
-const GameUpload: React.FC<GameUploadProps> = ({ processorRef, setIsGameLoaded }) => {
+const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame }) => {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const handleUpload = () => {
@@ -24,12 +22,11 @@ const GameUpload: React.FC<GameUploadProps> = ({ processorRef, setIsGameLoaded }
             const reader = new FileReader();
 
             reader.onload = (e) => {
-                if (e.target && e.target.result && processorRef) {
+                if (e.target && e.target.result) {
                     const arrayBuffer = e.target.result as ArrayBuffer;
                     const byteArray = new Uint8Array(arrayBuffer);
-                    // console.log(byteArray);
-                    processorRef.current?.load(byteArray);
-                    setIsGameLoaded(true);
+                    onLoadGame(byteArray);
+
                     console.log("File Name:", rom.name);
                     console.log("File Type:", rom.type);
                     console.log("File Size:", rom.size, "bytes");

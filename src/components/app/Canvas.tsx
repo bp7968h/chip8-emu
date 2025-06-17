@@ -10,19 +10,18 @@ const PIXEL_OFF_COLOR = "#000";
 interface CanvasProps {
     processorRef: RefObject<Processor | null>,
     memoryRef: RefObject<WebAssembly.Memory | null>,
-    isRunning: boolean,
+    screenUpdateTrigger: number;
     className?: string,
 }
 
 
-const Canvas: React.FC<CanvasProps> = ({ className, processorRef, memoryRef, isRunning }) => {
+const Canvas: React.FC<CanvasProps> = ({ className, processorRef, memoryRef, screenUpdateTrigger }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { pixelSize } = useCanvasSizing(canvasRef, CHIP8_WIDTH, CHIP8_HEIGHT);
-    const screenPtr = processorRef.current?.screen();
 
-    const drawDisplay = () => {
+    const drawDisplay = useCallback(() => {
         const canvas = canvasRef.current;
-        if (!canvas || pixelSize === 0 || !memoryRef.current || screenPtr === null) {
+        if (!canvas || pixelSize === 0 || !memoryRef.current || !processorRef.current) {
             return;
         }
 
@@ -31,6 +30,11 @@ const Canvas: React.FC<CanvasProps> = ({ className, processorRef, memoryRef, isR
             return;
         }
 
+        const screenPtr = processorRef.current.screen();
+        if (screenPtr === null) {
+            console.warn("Screen pointer is null, cannot draw display.");
+            return;
+        }
         const displayPixels = new Uint8Array(memoryRef.current.buffer, screenPtr, CHIP8_WIDTH * CHIP8_HEIGHT);
         ctx.fillStyle = PIXEL_OFF_COLOR;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -50,22 +54,11 @@ const Canvas: React.FC<CanvasProps> = ({ className, processorRef, memoryRef, isR
                 );
             }
         }
-    };
-
-    const gameLoop = () => {
-        if (processorRef.current === null) {
-            return;
-        }
-
-        processorRef.current.cycle();
-        processorRef.current.tick_timers();
-        drawDisplay();
-        requestAnimationFrame(gameLoop);
-    }
+    }, [pixelSize, processorRef, memoryRef]);
 
     useEffect(() => {
         drawDisplay();
-    }, [drawDisplay]);
+    }, [drawDisplay, screenUpdateTrigger]);
 
     return (
         <canvas ref={canvasRef} className={`bg-card rounded-xl w-full mb-2 ${className || ''}`}>

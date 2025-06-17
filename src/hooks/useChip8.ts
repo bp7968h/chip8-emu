@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 const useChip8 = () => {
     const processorRef = useRef<Processor | null>(null);
     const memoryRef = useRef<WebAssembly.Memory | null>(null);
+    const animationFrameIdRef = useRef<number | null>(null);
     useEffect(() => {
         const initChip8 = async () => {
             try {
@@ -17,11 +18,18 @@ const useChip8 = () => {
             }
         };
         initChip8();
+
+        return () => {
+            if (animationFrameIdRef.current !== null) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+            }
+        };
     }, []);
 
     return {
         processorRef,
-        memoryRef
+        memoryRef,
+        animationFrameIdRef
     };
 };
 
