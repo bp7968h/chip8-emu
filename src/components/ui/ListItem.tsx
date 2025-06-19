@@ -1,16 +1,14 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 
 interface ListItemProps {
-    name: string,
-    size: string,
+    children: ReactNode,
     selected?: boolean,
-    color?: string,
     onClick?: () => void,
     className?: string,
 }
 
 const ListItem: React.FC<ListItemProps> = ({
-    name, size, selected = false, color = "#6b7280", onClick, className
+    children, selected = false, onClick, className
 }) => {
     return (
         <li
@@ -22,13 +20,14 @@ const ListItem: React.FC<ListItemProps> = ({
       `}
             onClick={onClick}
         >
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
                 <span className={`w-2 h-2 rounded-full mr-2 bg-[${color}]`}></span>
                 <span className={`${selected ? 'text-gray-50' : 'text-gray-300'} font-semibold text-base`}>
                     {name}
                 </span>
             </div>
-            <span className="text-sm font-mono text-gray-400">{size}</span>
+            <span className="text-sm font-mono text-gray-400">{size}</span> */}
+            {children}
         </li>
     );
 };

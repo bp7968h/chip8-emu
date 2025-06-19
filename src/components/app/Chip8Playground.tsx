@@ -12,9 +12,11 @@ import Separator from "../ui/Separator";
 import useChip8 from "../../hooks/useChip8";
 import useKeyboardInput from "../../hooks/useKeyboardInput";
 import useChip8Controller from "../../hooks/useChip8Controller";
+import availableGames, { type GameInfo as AvailableGameInfo } from "../../constants/availableGames";
 
 const Chip8Playground: React.FC = () => {
     const { processorRef, memoryRef, animationFrameIdRef } = useChip8();
+    const [selectedGameInfo, setSelectedGameInfo] = useState<AvailableGameInfo | null>(null);
 
     const {
         isGameLoaded,
@@ -27,13 +29,36 @@ const Chip8Playground: React.FC = () => {
 
     useKeyboardInput({ processorRef, isRunning });
 
+    const handleGameSelection = async (game: AvailableGameInfo) => {
+        try {
+            const response = await fetch(`/roms/${game.filename}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${game.filename}: ${response.statusText}`);
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const byteArray = new Uint8Array(arrayBuffer);
+
+            handleLoadGame(byteArray);
+            setSelectedGameInfo(game);
+            console.log(`Successfully loaded ${game.title}`);
+        } catch (error) {
+            console.error("Error loading game from library:", error);
+        }
+    }
+
     return (
         <PlaygroundLayout>
             <Card className="lg:w-1/4">
                 <div className="flex flex-col justify-between">
-                    <GameLibrary />
+                    <GameLibrary
+                        games={availableGames}
+                        onGameSelect={handleGameSelection}
+                        selectedGameId={selectedGameInfo?.id || null}
+                    />
                     <Separator />
-                    <GameUpload onLoadGame={handleLoadGame} />
+                    <GameUpload
+                        onLoadGame={handleLoadGame}
+                    />
                 </div>
             </Card>
             <div className="lg:flex-1 flex flex-col">
