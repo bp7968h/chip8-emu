@@ -1,7 +1,6 @@
 import React from "react";
 import CardContent from "../ui/CardContent"
 import List from "../ui/List";
-import Game from "../../constants/gameItems";
 import type { GameInfo } from "../../constants/availableGames";
 
 interface GameLibraryProps {
