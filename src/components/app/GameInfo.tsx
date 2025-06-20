@@ -1,17 +1,27 @@
 import React from "react";
 import CardContent from "../ui/CardContent"
+import type { AvailableGameInfo } from "../../constants/availableGames";
 
 interface GameInfoProps {
+    availableGameInfo: AvailableGameInfo | null,
     className?: string;
 }
 
-const GameInfo: React.FC<GameInfoProps> = ({ className }) => {
-    const currentGame = {
-        name: "Pong",
-        size: "1KB",
-        year: 1972,
-        players: 2,
-    };
+const GameInfo: React.FC<GameInfoProps> = ({ availableGameInfo, className }) => {
+
+    if (!availableGameInfo) {
+        return (
+            <CardContent title="Game Information">
+                <div className={`flex items-center justify-center ${className || ''}`}>
+                    <div>
+                        <p className="text-sm text-gray-400 mb-1">
+                            Select game from game library or upload game and press PLAY.
+                        </p>
+                    </div>
+                </div>
+            </CardContent>
+        )
+    }
 
     return (
         <CardContent title="Game Information">
@@ -19,19 +29,19 @@ const GameInfo: React.FC<GameInfoProps> = ({ className }) => {
                 <div>
                     <p className="text-sm text-gray-400 mb-1">Now Playing:</p>
                     <h3 className="text-2xl font-bold text-purple-400 mb-2">
-                        {currentGame.name}
+                        {availableGameInfo.title}
                     </h3>
                 </div>
                 <div className="space-y-1 mb-6"> {/* Add some vertical spacing between stats */}
                     <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-gray-400">Size:</span> {currentGame.size}
+                        <span className="font-semibold text-gray-400">Size:</span> {availableGameInfo.size}KB
                     </p>
                     <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-gray-400">Year:</span> {currentGame.year}
+                        <span className="font-semibold text-gray-400">Year:</span> {availableGameInfo.year == 0 ? "____" : availableGameInfo.year}
                     </p>
-                    <p className="text-sm text-gray-300">
+                    {/* <p className="text-sm text-gray-300">
                         <span className="font-semibold text-gray-400">Players:</span> {currentGame.players}
-                    </p>
+                    </p> */}
                 </div>
             </div>
         </CardContent>

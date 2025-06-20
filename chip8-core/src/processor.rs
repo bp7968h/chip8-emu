@@ -1,4 +1,7 @@
-use crate::{NUM_KEYS, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR, V_REGS};
+use crate::{
+    NUM_KEYS, OPCODE_BUFFER_SIZE, RAM_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH, STACK_SIZE, START_ADDR,
+    V_REGS,
+};
 #[cfg(target_arch = "wasm32")]
 use js_sys;
 #[cfg(not(target_arch = "wasm32"))]
@@ -85,6 +88,13 @@ pub struct Processor {
     /// This 8-bit timer also decrements at a rate of 60Hz until it reaches zero.
     /// As long as its value is non-zero, a sound (a simple beep) is emitted.
     st: u8,
+
+    /// Last 10 executed opcodes
+    ///
+    /// Stores the last 10 executed opcodes as a circular buffer.
+    opcode_buffer: [u16; OPCODE_BUFFER_SIZE],
+    /// Index in `opcode_buffer` where the next opcode will be written.
+    opcode_buffer_idx: usize,
 }
 
 /// Provides a default, initialized state for the `Processor`.
@@ -105,6 +115,8 @@ impl Default for Processor {
             keys: [false; NUM_KEYS],
             dt: 0,
             st: 0,
+            opcode_buffer: [0; 10],
+            opcode_buffer_idx: 0,
         }
     }
 }
@@ -191,6 +203,14 @@ impl Processor {
         self.screen.as_slice().as_ptr()
     }
 
+    /// Provides read-only reference to opcode buffer
+    ///
+    /// This function returns the pointer to memory where the opcode buffer starts from
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(js_name = "opcodeBufferPtr"))]
+    pub fn opcode_buffer_ptr(&self) -> *const u16 {
+        self.opcode_buffer.as_slice().as_ptr()
+    }
+
     /// Handles a key press event.
     ///
     /// Sets the state of the specified key to `true` (pressed).
@@ -253,6 +273,11 @@ impl Processor {
         self.execute(op_code);
     }
 
+    fn push_opcode(&mut self, opcode: u16) {
+        self.opcode_buffer[self.opcode_buffer_idx] = opcode;
+        self.opcode_buffer_idx = (self.opcode_buffer_idx + 1) % OPCODE_BUFFER_SIZE;
+    }
+
     /// Fetches the next opecode from memory
     ///
     /// This function reads `two bytes` from memory at the current `Program Counter (pc)`
@@ -286,6 +311,7 @@ impl Processor {
     ///
     /// * `op_code` - The 16-bit value to decoded and executed.
     pub fn execute(&mut self, op_code: u16) {
+        self.push_opcode(op_code);
         let first_nibble = (op_code & 0xF000) >> 12;
         let x_register = (op_code & 0x0F00) >> 8;
         let y_register = (op_code & 0x00F0) >> 4;
@@ -622,20 +648,17 @@ impl Processor {
     }
 
     /// Returns the current value of the Program Counter (PC)
-    #[cfg(test)]
-    pub(crate) fn get_pc(&self) -> u16 {
+    pub fn program_counter(&self) -> u16 {
         self.pc
     }
 
     /// Returns the current value of the Program Counter (PC)
-    #[cfg(test)]
-    pub(crate) fn get_sp(&self) -> u16 {
+    pub fn stack_pointer(&self) -> u16 {
         self.sp
     }
 
     /// Returns the current value of the Index Register (IR)
-    #[cfg(test)]
-    pub(crate) fn get_ir(&self) -> u16 {
+    pub fn i_register(&self) -> u16 {
         self.ir
     }
 }
@@ -697,7 +720,7 @@ mod tests {
         cpu.cycle();
 
         // After the cycle, the PC should have jumped to the new address
-        assert_eq!(cpu.get_pc(), jump_address);
+        assert_eq!(cpu.program_counter(), jump_address);
     }
 
     #[test]
@@ -719,29 +742,29 @@ mod tests {
         // After the cycle, the specified register should hold the value
         assert_eq!(cpu.vr[register_index as usize], value);
         // The PC should have advanced by 2 after fetch
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
     fn test_fetch_opcode() {
         let mut cpu = Processor::new();
         let opcode: u16 = 0xA1B2;
-        cpu.mem[cpu.get_pc() as usize] = (opcode >> 8) as u8;
-        cpu.mem[(cpu.get_pc() + 1) as usize] = opcode as u8;
-        let initial_pc = cpu.get_pc();
+        cpu.mem[cpu.program_counter() as usize] = (opcode >> 8) as u8;
+        cpu.mem[(cpu.program_counter() + 1) as usize] = opcode as u8;
+        let initial_pc = cpu.program_counter();
 
         let fetched_opcode = cpu.fetch();
 
         assert_eq!(fetched_opcode, opcode);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
     fn test_execute_nop() {
         let mut cpu = Processor::new();
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x0000);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
@@ -758,7 +781,7 @@ mod tests {
         cpu.sp = 1;
         cpu.stack[0] = 0x567;
         cpu.execute(0x00EE);
-        assert_eq!(cpu.get_pc(), 0x567);
+        assert_eq!(cpu.program_counter(), 0x567);
         assert_eq!(cpu.sp, 0);
     }
 
@@ -766,15 +789,15 @@ mod tests {
     fn test_execute_jp() {
         let mut cpu = Processor::new();
         cpu.execute(0x1ABC);
-        assert_eq!(cpu.get_pc(), 0xABC);
+        assert_eq!(cpu.program_counter(), 0xABC);
     }
 
     #[test]
     fn test_execute_call() {
         let mut cpu = Processor::new();
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x2DEF);
-        assert_eq!(cpu.get_pc(), 0xDEF);
+        assert_eq!(cpu.program_counter(), 0xDEF);
         assert_eq!(cpu.sp, 1);
         assert_eq!(cpu.stack[0], initial_pc);
     }
@@ -783,36 +806,36 @@ mod tests {
     fn test_execute_se_vx_nn_equal() {
         let mut cpu = Processor::new();
         cpu.vr[0x3] = 0x42;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x3342);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
     fn test_execute_se_vx_nn_not_equal() {
         let mut cpu = Processor::new();
         cpu.vr[0x3] = 0x41;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x3342);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
     fn test_execute_sne_vx_nn_not_equal() {
         let mut cpu = Processor::new();
         cpu.vr[0x1] = 0x10;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x4111);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
     fn test_execute_sne_vx_nn_equal() {
         let mut cpu = Processor::new();
         cpu.vr[0x1] = 0x10;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x4110);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
@@ -820,9 +843,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x2] = 0x5;
         cpu.vr[0x7] = 0x5;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x5270);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
@@ -830,9 +853,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x2] = 0x5;
         cpu.vr[0x7] = 0x6;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x5270);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
@@ -980,9 +1003,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0xA] = 5;
         cpu.vr[0xB] = 10;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x9AB0);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
@@ -990,16 +1013,16 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0xA] = 5;
         cpu.vr[0xB] = 5;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0x9AB0);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
     fn test_execute_ld_i() {
         let mut cpu = Processor::new();
         cpu.execute(0xA123);
-        assert_eq!(cpu.get_ir(), 0x123);
+        assert_eq!(cpu.i_register(), 0x123);
     }
 
     #[test]
@@ -1007,7 +1030,7 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0] = 0x10;
         cpu.execute(0xB234);
-        assert_eq!(cpu.get_pc(), 0x234 + 0x10);
+        assert_eq!(cpu.program_counter(), 0x234 + 0x10);
     }
 
     #[test]
@@ -1046,9 +1069,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x2] = 0x5;
         cpu.keys[0x5] = true;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0xE29E);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
@@ -1056,9 +1079,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x2] = 0x5;
         cpu.keys[0x5] = false;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0xE29E);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
@@ -1066,9 +1089,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x4] = 0xA;
         cpu.keys[0xA] = false;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0xE4A1);
-        assert_eq!(cpu.get_pc(), initial_pc + 2);
+        assert_eq!(cpu.program_counter(), initial_pc + 2);
     }
 
     #[test]
@@ -1076,9 +1099,9 @@ mod tests {
         let mut cpu = Processor::new();
         cpu.vr[0x4] = 0xA;
         cpu.keys[0xA] = true;
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0xE4A1);
-        assert_eq!(cpu.get_pc(), initial_pc);
+        assert_eq!(cpu.program_counter(), initial_pc);
     }
 
     #[test]
@@ -1092,9 +1115,9 @@ mod tests {
     #[test]
     fn test_execute_ld_vx_k_skips_if_no_key() {
         let mut cpu = Processor::new();
-        let initial_pc = cpu.get_pc();
+        let initial_pc = cpu.program_counter();
         cpu.execute(0xF20A);
-        assert_eq!(cpu.get_pc(), initial_pc - 2);
+        assert_eq!(cpu.program_counter(), initial_pc - 2);
     }
 
     #[test]
@@ -1123,13 +1146,13 @@ mod tests {
 
         cpu.stk_push(val1);
         cpu.stk_push(val2);
-        assert_eq!(cpu.get_sp(), 2);
+        assert_eq!(cpu.stack_pointer(), 2);
 
         assert_eq!(cpu.stk_pop(), val2);
-        assert_eq!(cpu.get_sp(), 1);
+        assert_eq!(cpu.stack_pointer(), 1);
 
         assert_eq!(cpu.stk_pop(), val1);
-        assert_eq!(cpu.get_sp(), 0);
+        assert_eq!(cpu.stack_pointer(), 0);
     }
 
     #[test]

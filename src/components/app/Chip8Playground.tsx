@@ -12,7 +12,7 @@ import Separator from "../ui/Separator";
 import useChip8 from "../../hooks/useChip8";
 import useKeyboardInput from "../../hooks/useKeyboardInput";
 import useChip8Controller from "../../hooks/useChip8Controller";
-import availableGames, { type GameInfo as AvailableGameInfo } from "../../constants/availableGames";
+import availableGames, { type AvailableGameInfo } from "../../constants/availableGames";
 
 const Chip8Playground: React.FC = () => {
     const { processorRef, memoryRef, animationFrameIdRef } = useChip8();
@@ -21,6 +21,7 @@ const Chip8Playground: React.FC = () => {
     const {
         isGameLoaded,
         isRunning,
+        emulatorStatus,
         screenUpdateTrigger,
         handleLoadGame,
         handlePlayPause,
@@ -48,7 +49,7 @@ const Chip8Playground: React.FC = () => {
 
     return (
         <PlaygroundLayout>
-            <Card className="lg:w-1/4">
+            <Card className="lg:w-[25%]">
                 <div className="flex flex-col justify-between">
                     <GameLibrary
                         games={availableGames}
@@ -58,6 +59,7 @@ const Chip8Playground: React.FC = () => {
                     <Separator />
                     <GameUpload
                         onLoadGame={handleLoadGame}
+                        setUploadedGameInfo={setSelectedGameInfo}
                     />
                 </div>
             </Card>
@@ -79,10 +81,17 @@ const Chip8Playground: React.FC = () => {
                     <KeyboardMapping />
                 </Card>
             </div>
-            <Card className="lg:w-1/4">
-                <GameInfo />
+            <Card className="lg:w-[30%]">
+                <GameInfo
+                    availableGameInfo={selectedGameInfo}
+                />
                 <Separator />
-                <CpuStatus />
+                <CpuStatus
+                    processorRef={processorRef}
+                    memoryRef={memoryRef}
+                    screenUpdateTrigger={screenUpdateTrigger}
+                    emulatorStatus={emulatorStatus}
+                />
             </Card>
         </PlaygroundLayout>
     )

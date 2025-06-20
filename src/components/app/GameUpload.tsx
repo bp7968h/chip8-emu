@@ -1,11 +1,13 @@
 import React, { useRef } from "react";
 import CardContent from "../ui/CardContent"
+import type { AvailableGameInfo } from "../../constants/availableGames";
 
 interface GameUploadProps {
     onLoadGame: (data: Uint8Array) => void,
+    setUploadedGameInfo: React.Dispatch<React.SetStateAction<AvailableGameInfo | null>>
 }
 
-const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame }) => {
+const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame, setUploadedGameInfo }) => {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const handleUpload = () => {
@@ -26,10 +28,24 @@ const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame }) => {
                     const arrayBuffer = e.target.result as ArrayBuffer;
                     const byteArray = new Uint8Array(arrayBuffer);
                     onLoadGame(byteArray);
-
-                    console.log("File Name:", rom.name);
-                    console.log("File Type:", rom.type);
-                    console.log("File Size:", rom.size, "bytes");
+                    let uploadedGameName = rom.name.split(".")[0];
+                    if (uploadedGameName.includes("_")) {
+                        uploadedGameName = uploadedGameName
+                            .split("_")
+                            .map(word => word[0].toUpperCase() + word.slice(1).toLowerCase())
+                            .join(" ");
+                    } else {
+                        uploadedGameName = uploadedGameName.charAt(0).toUpperCase() + uploadedGameName.slice(1).toLowerCase();
+                    }
+                    setUploadedGameInfo({
+                        author: "Unknown",
+                        description: [{ key: "info", action: "No data available" }],
+                        filename: rom.name,
+                        id: uploadedGameName,
+                        size: rom.size / 1000,
+                        title: uploadedGameName,
+                        year: 0
+                    })
                 }
             };
 
@@ -44,8 +60,6 @@ const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame }) => {
     return (
         <CardContent title="Upload Game">
             <div className="border-2 border-dashed border-purple-500 rounded-lg p-8 text-center text-purple-400 flex-shrink-0">
-                <p className="text-lg mb-2">Drop ROM file here</p>
-                <p className="text-sm text-gray-400 mb-4">or</p>
                 <button
                     onClick={handleUpload}
                     className="

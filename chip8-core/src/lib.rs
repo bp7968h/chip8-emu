@@ -25,3 +25,6 @@ pub(crate) const START_ADDR: u16 = 0x200;
 /// The number of keys on the CHIP-8's hexadecimal keypad.
 /// This includes keys 0-9 and A-F, totaling 16 keys.
 pub const NUM_KEYS: usize = 16;
+
+/// This is constant value to maintain circular buffer for last `OPCODE_BUFFER_SIZE` executed opcodes
+pub(crate) const OPCODE_BUFFER_SIZE: usize = 10;

@@ -1,11 +1,11 @@
 import React from "react";
 import CardContent from "../ui/CardContent"
 import List from "../ui/List";
-import type { GameInfo } from "../../constants/availableGames";
+import type { AvailableGameInfo } from "../../constants/availableGames";
 
 interface GameLibraryProps {
-    games: GameInfo[],
-    onGameSelect: (game: GameInfo) => void,
+    games: AvailableGameInfo[],
+    onGameSelect: (game: AvailableGameInfo) => void,
     selectedGameId: string | null,
 }
 
@@ -14,8 +14,9 @@ const GameLibrary: React.FC<GameLibraryProps> = ({ games, onGameSelect, selected
         <CardContent title="Game Library">
             <List
                 items={games}
-                onItemClick={(game: GameInfo) => onGameSelect(game)}
-                className="flex-grow"
+                onItemClick={(game: AvailableGameInfo) => onGameSelect(game)}
+                className="space-y-2 flex-grow"
+                listItemClassName="p-3"
                 renderItem={(game) => (
                     <div className="flex items-center">
                         <span className={`w-2 h-2 rounded-full mr-2 bg-purple-400`}></span>

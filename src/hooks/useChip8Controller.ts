@@ -1,7 +1,9 @@
 import type { Processor } from "chip8_core";
 import { useCallback, useEffect, useState, type RefObject } from "react";
 
-const CHIP8_CYCLES_PER_FRAME = 10;
+export const CHIP8_CYCLES_PER_FRAME = 10;
+
+export type EmulatorStatus = 'stopped' | 'paused' | 'running';
 
 interface UseChip8ControllerProps {
     processorRef: RefObject<Processor | null>;
@@ -11,6 +13,7 @@ interface UseChip8ControllerProps {
 interface UseChip8ControllerReturn {
     isGameLoaded: boolean;
     isRunning: boolean;
+    emulatorStatus: EmulatorStatus;
     screenUpdateTrigger: number;
     handleLoadGame: (data: Uint8Array) => void;
     handlePlayPause: () => void;
@@ -20,6 +23,7 @@ interface UseChip8ControllerReturn {
 const useChip8Controller = ({ processorRef, animationFrameIdRef }: UseChip8ControllerProps): UseChip8ControllerReturn => {
     const [isGameLoaded, setIsGameLoaded] = useState<boolean>(false);
     const [isRunning, setIsRunning] = useState<boolean>(false);
+    const [emulatorStatus, setEmulatorStatus] = useState<EmulatorStatus>('stopped');
     const [screenUpdateTrigger, setScreenUpdateTrigger] = useState(0);
 
     // Game Loop Logic
@@ -42,11 +46,20 @@ const useChip8Controller = ({ processorRef, animationFrameIdRef }: UseChip8Contr
 
     useEffect(() => {
         if (isRunning) {
+            setEmulatorStatus("running");
             animationFrameIdRef.current = requestAnimationFrame(gameLoop);
         } else {
             if (animationFrameIdRef.current !== null) {
                 cancelAnimationFrame(animationFrameIdRef.current);
                 animationFrameIdRef.current = null;
+            }
+
+            // If a game is loaded, it means it's now paused.
+            // If no game is loaded, it means it's stopped.
+            if (isGameLoaded) {
+                setEmulatorStatus('paused');
+            } else {
+                setEmulatorStatus('stopped');
             }
         }
 
@@ -65,6 +78,7 @@ const useChip8Controller = ({ processorRef, animationFrameIdRef }: UseChip8Contr
             setIsGameLoaded(true);
             // Pause after loading a new game, user will press play
             setIsRunning(false);
+            setEmulatorStatus('paused');
             // Force redraw after loading
             setScreenUpdateTrigger(prev => prev + 1);
             console.log("Game loaded.");
@@ -85,6 +99,7 @@ const useChip8Controller = ({ processorRef, animationFrameIdRef }: UseChip8Contr
             // Reset Chip-8 state
             processorRef.current.reset();
             // A reset means no game is currently "loaded and ready to play"
+            setEmulatorStatus('stopped');
             setIsGameLoaded(false);
             // Force redraw after reset
             setScreenUpdateTrigger(prev => prev + 1);
@@ -95,6 +110,7 @@ const useChip8Controller = ({ processorRef, animationFrameIdRef }: UseChip8Contr
     return {
         isGameLoaded,
         isRunning,
+        emulatorStatus,
         screenUpdateTrigger,
         handleLoadGame,
         handlePlayPause,

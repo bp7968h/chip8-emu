@@ -3,7 +3,7 @@ export interface GameControlInfo {
     action: string
 }
 
-export interface GameInfo {
+export interface AvailableGameInfo {
     id: string,
     title: string,
     filename: string,
@@ -13,7 +13,7 @@ export interface GameInfo {
     description: GameControlInfo[],
 }
 
-const availableGames: GameInfo[] = [
+const availableGames: AvailableGameInfo[] = [
     {
         id: "space_invaders",
         title: "Space Invaders",
@@ -22,6 +22,7 @@ const availableGames: GameInfo[] = [
         author: "David Winter",
         year: 1978,
         description: [
+            { key: 'info', action: 'Destroy obstacle by shooting or escape by moving' },
             { key: '5', action: 'Shoot' },
             { key: '4', action: 'Move Left' },
             { key: '6', action: 'Move Right' },
@@ -35,6 +36,7 @@ const availableGames: GameInfo[] = [
         author: "Unknown",
         year: 1972,
         description: [
+            { key: 'info', action: "Single player pong game" },
             { key: '1', action: 'Move Up' },
             { key: 'Q', action: 'Move Down' },
         ]
@@ -51,7 +53,7 @@ const availableGames: GameInfo[] = [
             { key: '5', action: 'Left Move' },
             { key: '6', action: 'Right Move' },
             { key: '1', action: 'Drop' },
-            { key: 'Speed', action: 'Increases slightly every 5 lines, peaks at 45 lines' },
+            { key: 'info', action: 'Increases slightly every 5 lines, peaks at 45 lines' },
         ]
     },
     {
