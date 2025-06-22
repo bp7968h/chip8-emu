@@ -46,6 +46,7 @@ To get a local copy up and running, follow these simple steps.
     cargo install wasm-pack
   ```
 - sdl2: Optional for native desktop application
+- Docker: For containerized setup
 
 ### Installation & Running Locally
 
@@ -58,7 +59,7 @@ To get a local copy up and running, follow these simple steps.
     ```bash
       npm run wasm:build && npm install && npm run dev
     ```
-This will usually open http://localhost:5173 in your browser, where you can interact with the emulator.
+This will usually open `http://localhost:5173` in your browser, where you can interact with the emulator.
 
 ### Running with Docker (Quick Setup)
 

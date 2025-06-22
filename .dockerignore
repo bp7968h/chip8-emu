@@ -1,0 +1,12 @@
+.dockerignore
+node_modules
+.git
+.gitignore
+.DS_Store
+*.log
+.env
+.env.*
+pkg
+target
+AppImage.png
+README.md
