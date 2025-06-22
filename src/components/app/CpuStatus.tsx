@@ -61,7 +61,7 @@ const CpuStatus: React.FC<CpuStatusProps> = ({
     }, [screenUpdateTrigger, processorRef, memoryRef]);
 
     return (
-        <CardContent title="CPU Status" className={`flex flex-col ${className || ''}`}>
+        <CardContent title="CPU Status" className={`flex flex-col h-full ${className || ''}`}>
             <h3 className={`text-2xl font-bold ${colorClass(emulatorStatus)} mx-2`}>
                 {emulatorStatus.toUpperCase()}
             </h3>

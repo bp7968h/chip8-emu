@@ -288,15 +288,15 @@ impl Processor {
     ///
     /// A `u16` representing the fetched opcode.
     fn fetch(&mut self) -> u16 {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!("RAM: {:?}", self.mem).into());
+        // #[cfg(target_arch = "wasm32")]
+        // web_sys::console::log_1(&format!("RAM: {:?}", self.mem).into());
         let high_byte = self.mem[self.pc as usize] as u16;
         let low_byte = self.mem[(self.pc + 1) as usize] as u16;
         self.pc += 2;
-        #[cfg(not(target_arch = "wasm32"))]
-        println!("High: {}, Low: {}", high_byte, low_byte);
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!("High: {}, Low: {}", high_byte, low_byte).into());
+        // #[cfg(not(target_arch = "wasm32"))]
+        // println!("High: {}, Low: {}", high_byte, low_byte);
+        // #[cfg(target_arch = "wasm32")]
+        // web_sys::console::log_1(&format!("High: {}, Low: {}", high_byte, low_byte).into());
         // combine high and low byte to single u16 value
         (high_byte << 8) | low_byte
     }
@@ -472,7 +472,7 @@ impl Processor {
                                 }
                                 Pixel::On => {
                                     self.screen[idx] = Pixel::Off;
-                                    flipped = true; // Set collision flag when turning a pixel off
+                                    flipped = true;
                                 }
                             };
                             // flipped |= match self.screen[idx] {
