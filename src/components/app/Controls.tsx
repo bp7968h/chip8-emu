@@ -1,6 +1,5 @@
-import React, { type RefObject } from "react";
+import React from "react";
 import CardContent from "../ui/CardContent"
-import type { Processor } from "chip8_core";
 
 interface ControlsProps {
     isGameLoaded: boolean,
@@ -14,17 +13,28 @@ const Controls: React.FC<ControlsProps> = ({ isGameLoaded, isRunning, onPlayPaus
         <CardContent title="Controls">
             <div className="flex flex-wrap items-center gap-4 justify-center">
                 <button
-                    className={`${isRunning ? "hover:bg-cyellow bg-yellow-700" : "hover:bg-cgreen bg-green-700 "}
-            text-white font-bold py-2 px-4 rounded-md shadow-md flex items-center hover:cursor-pointer`}
+                    className={`
+                        text-white font-bold py-2 px-4 rounded-md shadow-md flex items-center
+                        ${isRunning
+                            ? "bg-yellow-700 hover:bg-yellow-600 focus:ring-yellow-500" // Use a slightly different hover for better feedback
+                            : "bg-green-700 hover:bg-green-600 focus:ring-green-500"
+                        }
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none // Styles for disabled state
+                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 // Focus styles for accessibility
+                    `}
                     aria-label="Play Emulator"
                     onClick={onPlayPause}
-                    // disabled={isGameLoaded}
                     disabled={!isGameLoaded && !isRunning}
                 >
                     <span className="mr-1 text-base">{isRunning ? "⏸" : "▶"}</span> {isRunning ? "PAUSE" : "PLAY"}
                 </button>
                 <button
-                    className="hover:bg-cred bg-red-700 text-white font-bold py-2 px-4 rounded-md flex items-center hover:cursor-pointer"
+                    className={`
+                        bg-red-700 hover:bg-red-600 focus:ring-red-500 // Use a slightly different hover
+                        text-white font-bold py-2 px-4 rounded-md flex items-center
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none // Styles for disabled state
+                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 // Focus styles for accessibility
+                    `}
                     aria-label="Reset Emulator"
                     onClick={onReset}
                     disabled={!isGameLoaded}
@@ -32,8 +42,8 @@ const Controls: React.FC<ControlsProps> = ({ isGameLoaded, isRunning, onPlayPaus
                     <span className="mr-1 text-base">↻</span> RESET
                 </button>
             </div>
-        </CardContent >
-    )
+        </CardContent>
+    );
 }
 
 export default Controls;

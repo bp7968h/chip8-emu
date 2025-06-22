@@ -91,7 +91,7 @@ const availableGames: AvailableGameInfo[] = [
     {
         id: "breakout",
         title: "Breakout",
-        filename: "breakout",
+        filename: "breakout.ch8",
         size: 0.28,
         author: "David Winter",
         year: 1997,

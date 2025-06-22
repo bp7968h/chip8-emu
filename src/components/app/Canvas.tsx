@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useRef, type RefObject } from "react";
 import useCanvasSizing from "../../hooks/useCanvasSizing";
 import { Pixel, type Processor } from "chip8_core";
+import { PIXEL_OFF_COLOR, PIXEL_ON_COLOR } from "../../constants/pixelColors";
 
 const CHIP8_WIDTH = 64;
 const CHIP8_HEIGHT = 32;
-const PIXEL_ON_COLOR = "#fff";
-const PIXEL_OFF_COLOR = "#000";
 
 interface CanvasProps {
     processorRef: RefObject<Processor | null>,

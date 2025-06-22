@@ -7,13 +7,13 @@ export interface NavItemsType {
 };
 
 const navItems: NavItemsType[] = [
-    {
-        href: "#",
-        title: "About / Help",
-        text: "About",
-        src: "/help.svg",
-        external: false
-    },
+    // {
+    //     href: "#",
+    //     title: "About / Help",
+    //     text: "About",
+    //     src: "/help.svg",
+    //     external: false
+    // },
     {
         href: "https://github.com/bp7968h/chip8-emu",
         title: "GitHub Repository",

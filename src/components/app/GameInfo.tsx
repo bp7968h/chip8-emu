@@ -32,16 +32,13 @@ const GameInfo: React.FC<GameInfoProps> = ({ availableGameInfo, className }) => 
                         {availableGameInfo.title}
                     </h3>
                 </div>
-                <div className="space-y-1 mb-6"> {/* Add some vertical spacing between stats */}
+                <div className="space-y-1 mb-4">
                     <p className="text-sm text-gray-300">
                         <span className="font-semibold text-gray-400">Size:</span> {availableGameInfo.size}KB
                     </p>
                     <p className="text-sm text-gray-300">
                         <span className="font-semibold text-gray-400">Year:</span> {availableGameInfo.year == 0 ? "____" : availableGameInfo.year}
                     </p>
-                    {/* <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-gray-400">Players:</span> {currentGame.players}
-                    </p> */}
                 </div>
             </div>
         </CardContent>

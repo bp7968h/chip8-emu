@@ -23,10 +23,11 @@ const Chip8Playground: React.FC = () => {
         isRunning,
         emulatorStatus,
         screenUpdateTrigger,
+        fps,
         handleLoadGame,
         handlePlayPause,
         handleReset,
-    } = useChip8Controller({ processorRef, animationFrameIdRef });
+    } = useChip8Controller({ processorRef, animationFrameIdRef, setSelectedGameInfo });
 
     useKeyboardInput({ processorRef, isRunning });
 
@@ -41,7 +42,7 @@ const Chip8Playground: React.FC = () => {
 
             handleLoadGame(byteArray);
             setSelectedGameInfo(game);
-            console.log(`Successfully loaded ${game.title}`);
+            // console.log(`Successfully loaded ${game.title}`);
         } catch (error) {
             console.error("Error loading game from library:", error);
         }
@@ -81,16 +82,19 @@ const Chip8Playground: React.FC = () => {
                     <KeyboardMapping />
                 </Card>
             </div>
-            <Card className="lg:w-[30%]">
+            <Card className="lg:w-[30%] felx flex-col max-h-full">
                 <GameInfo
+                    className="h-[20%]"
                     availableGameInfo={selectedGameInfo}
                 />
                 <Separator />
                 <CpuStatus
+                    className="flex-1"
                     processorRef={processorRef}
                     memoryRef={memoryRef}
                     screenUpdateTrigger={screenUpdateTrigger}
                     emulatorStatus={emulatorStatus}
+                    fps={fps}
                 />
             </Card>
         </PlaygroundLayout>

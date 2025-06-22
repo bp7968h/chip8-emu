@@ -12,7 +12,6 @@ const useChip8 = () => {
                 const processor = new Processor();
                 processorRef.current = processor;
                 memoryRef.current = memory;
-                console.log("Chip8 processor initialized successfully.");
             } catch (err) {
                 console.error("Failed to initialize Chip8 processor: ", err);
             }

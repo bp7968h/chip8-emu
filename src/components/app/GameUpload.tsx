@@ -4,7 +4,7 @@ import type { AvailableGameInfo } from "../../constants/availableGames";
 
 interface GameUploadProps {
     onLoadGame: (data: Uint8Array) => void,
-    setUploadedGameInfo: React.Dispatch<React.SetStateAction<AvailableGameInfo | null>>
+    setUploadedGameInfo: React.Dispatch<React.SetStateAction<AvailableGameInfo | null>>,
 }
 
 const GameUpload: React.FC<GameUploadProps> = ({ onLoadGame, setUploadedGameInfo }) => {
