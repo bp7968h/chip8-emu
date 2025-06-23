@@ -52,7 +52,7 @@ To get a local copy up and running, follow these simple steps.
 
 1. Clone the repository
     ```bash
-     git clone https://github.com/your-username/chip8-emu.git
+     git clone https://github.com/bp7968h/chip8-emu.git
      cd chip8-emu
     ```
 2. Build and Run development server
@@ -67,7 +67,7 @@ If you have Docker installed, you can get the entire application (Rust/WASM buil
 
 1. Clone the repository
     ```bash
-     git clone https://github.com/your-username/chip8-emu.git
+     git clone https://github.com/bp7968h/chip8-emu.git
      cd chip8-emu
     ```
 2. Build and run the Docker container:
